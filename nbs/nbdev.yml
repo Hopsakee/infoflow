@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "infoflow"
+  site-url: "https://Hopsakee.github.io/infoflow"
+  description: "Visualisation and description of Jelle's information process workflow"
+  repo-branch: main
+  repo-url: "https://github.com/Hopsakee/infoflow"
