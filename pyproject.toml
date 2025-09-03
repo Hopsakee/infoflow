@@ -1,9 +1,13 @@
 [project]
-name = "infoflow"
+name="infoflow"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python=">=3.11"
 dependencies = [
     "graphix>=0.3.2",
 ]
+
+[build-system]
+requires = ["setuptools>=64.0"]
+build-backend = "setuptools.build_meta"
