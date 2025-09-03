@@ -1,0 +1,82 @@
+[
+  {
+    "objectID": "create_vizualisation.html",
+    "href": "create_vizualisation.html",
+    "title": "Create graphiz visualisation",
+    "section": "",
+    "text": "The function to create the workflow visualisation for the given info_items and tools. The function needs all available tools as input and the info_items you want the visualisation for. It returns a graphviz.Digraph object that can be rendered in Jupyter notebooks or saved to a file. We will be using the SVG format for the web-application.\n\nsource\n\ncreate_combined_workflow_viz\n\n create_combined_workflow_viz (info_items, all_tools)\n\nAn example for creating the actual visualisation for the given info_items and tools.\n\ntools = [reader, recall, readwise, obsidian, librarything, snipd, neoreader, youtube]\nitems = [note_item, web_article_item, annotation_item, book_item, youtube_video_item, podcast_item, research_paper_item, document_item]\nviz = create_combined_workflow_viz(items, tools)\n\n\nviz",
+    "crumbs": [
+      "Create graphiz visualisation"
+    ]
+  },
+  {
+    "objectID": "define_classes.html",
+    "href": "define_classes.html",
+    "title": "Define Classes",
+    "section": "",
+    "text": "First we define the possible values of the different variables that are available in the classes. We use the module enum to define Enumerations. We use this to bind the possible values to a variable name, making the code more readable and maintainable.\n\nsource\n\nOrganizationSystem\n\n OrganizationSystem (value, names=None, module=None, qualname=None,\n                     type=None, start=1, boundary=None)\n\nHow tools organize and structure information.\n\nsource\n\n\nPhaseQuality\n\n PhaseQuality (value, names=None, module=None, qualname=None, type=None,\n               start=1, boundary=None)\n\nQuality rating for how well a tool performs in each phase.\n\nsource\n\n\nPhase\n\n Phase (value, names=None, module=None, qualname=None, type=None, start=1,\n        boundary=None)\n\nThe five phases of the PKM workflow.\n\nsource\n\n\nMethod\n\n Method (value, names=None, module=None, qualname=None, type=None,\n         start=1, boundary=None)\n\nHow actions are performed - manually or automatically.\n\nsource\n\n\nInformationType\n\n InformationType (value, names=None, module=None, qualname=None,\n                  type=None, start=1, boundary=None)\n\nInformation content types that flow through the PKM workflow.\nNext we create a dataclass for each item we need to be present in the PKM workflow.\n\nsource\n\n\nImprovement\n\n Improvement (what:str, why:str, prio:int, workflow_routes:list)\n\nTracks workflow improvements needed for better PKM effectiveness.\n\nsource\n\n\nTool\n\n Tool (name:str, info_items:list[__main__.InformationItem],\n       organization_system:list[__main__.OrganizationSystem],\n       phase_quality:list[__main__.PhaseQuality])\n\nRepresents a PKM tool with supported information items.\n\nsource\n\n\nInformationItem\n\n InformationItem (info_type:__main__.InformationType,\n                  method:list[typing.Optional[__main__.Method]],\n                  toolflow:list)\n\nRepresents an information item flowing through the PKM workflow.",
+    "crumbs": [
+      "Define Classes"
+    ]
+  },
+  {
+    "objectID": "create_instances.html",
+    "href": "create_instances.html",
+    "title": "Create Instances",
+    "section": "",
+    "text": "First we create instances for each information item we want to be able to proces.\nThe next stap is to define instances for each Tool we use.",
+    "crumbs": [
+      "Create Instances"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "infoflow",
+    "section": "",
+    "text": "I created this project because I want a personal knowledge management system to efficiently collect, organize, and retrieve information from various sources (books, articles, videos, podcasts, research papers, etc.). I usually can’t immediately consume the information I encounter. By building a clear workflow of actions and tools I use to solve the problem of having more interesting information than I can process. By creating a structured four-phase workflow (Collect, Retrieve, Consume, Refine) I aim to make it as easy and fast as possible to store items when I encounter them and later find relevant information when I need it based on my current interests or projects.\nI want to implement this as Python classes and visualize it with Graphviz because this approach provides flexibility to easily modify tools and processes, unlike static text or diagram-based approaches.\n\n\n\ncd {folder where you want to create the folder for this project}\ngit clone git@github.com:Hopsakee/infoflow.git\ncd infoflow\nuv sync\nuv run main.py\nThis starts a local server where the application will be run.",
+    "crumbs": [
+      "infoflow"
+    ]
+  },
+  {
+    "objectID": "index.html#user-guide",
+    "href": "index.html#user-guide",
+    "title": "infoflow",
+    "section": "",
+    "text": "I created this project because I want a personal knowledge management system to efficiently collect, organize, and retrieve information from various sources (books, articles, videos, podcasts, research papers, etc.). I usually can’t immediately consume the information I encounter. By building a clear workflow of actions and tools I use to solve the problem of having more interesting information than I can process. By creating a structured four-phase workflow (Collect, Retrieve, Consume, Refine) I aim to make it as easy and fast as possible to store items when I encounter them and later find relevant information when I need it based on my current interests or projects.\nI want to implement this as Python classes and visualize it with Graphviz because this approach provides flexibility to easily modify tools and processes, unlike static text or diagram-based approaches.\n\n\n\ncd {folder where you want to create the folder for this project}\ngit clone git@github.com:Hopsakee/infoflow.git\ncd infoflow\nuv sync\nuv run main.py\nThis starts a local server where the application will be run.",
+    "crumbs": [
+      "infoflow"
+    ]
+  },
+  {
+    "objectID": "index.html#developer-guide",
+    "href": "index.html#developer-guide",
+    "title": "infoflow",
+    "section": "Developer Guide",
+    "text": "Developer Guide\nIf you are new to using nbdev here are some useful pointers to get you started.\n\nInstall infoflow in Development mode\n# make sure infoflow package is installed in development mode\n$ pip install -e .\n\n# make changes under nbs/ directory\n# ...\n\n# compile to have changes apply to infoflow\n$ nbdev_prepare",
+    "crumbs": [
+      "infoflow"
+    ]
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "infoflow",
+    "section": "Usage",
+    "text": "Usage\n\nInstallation\nInstall latest from the GitHub repository:\n$ pip install git+https://github.com/Hopsakee/infoflow.git\nor from conda\n$ conda install -c Hopsakee infoflow\nor from pypi\n$ pip install infoflow\n\n\nDocumentation\nDocumentation can be found hosted on this GitHub repository’s pages. Additionally you can find package manager specific guidelines on conda and pypi respectively.",
+    "crumbs": [
+      "infoflow"
+    ]
+  },
+  {
+    "objectID": "index.html#how-to-use",
+    "href": "index.html#how-to-use",
+    "title": "infoflow",
+    "section": "How to use",
+    "text": "How to use\nFill me in please! Don’t forget code examples:\n\n1+1\n\n2",
+    "crumbs": [
+      "infoflow"
+    ]
+  }
+]
