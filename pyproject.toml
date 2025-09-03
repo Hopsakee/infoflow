@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python=">=3.11"
 dependencies = [
     "graphix>=0.3.2",
+    "pre-commit>=4.3.0",
 ]
 
 [build-system]
