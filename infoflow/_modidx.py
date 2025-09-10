@@ -19,5 +19,6 @@ d = { 'settings': { 'branch': 'main',
                                'infoflow.core.Phase': ('core.html#phase', 'infoflow/core.py'),
                                'infoflow.core.PhaseQuality': ('core.html#phasequality', 'infoflow/core.py')},
             'infoflow.creinst': {},
-            'infoflow.viz': { 'infoflow.viz.create_combined_workflow_viz': ( 'create_vizualisation.html#create_combined_workflow_viz',
-                                                                             'infoflow/viz.py')}}}
+            'infoflow.viz': { 'infoflow.viz.create_combined_infoflow_viz': ( 'create_vizualisation.html#create_combined_infoflow_viz',
+                                                                             'infoflow/viz.py')},
+            'infoflow.webapp': {}}}
