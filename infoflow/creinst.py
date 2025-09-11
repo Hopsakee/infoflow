@@ -17,7 +17,7 @@ web_article_item = InformationItem(
     toolflow=[("Reader", "Recall"), "Recall", "Reader", None, None]
 )
 
-# %% ../nbs/01_create_instances.ipynb 6
+# %% ../nbs/01_create_instances.ipynb 7
 annotation_item = InformationItem(
     info_type=InformationType.ANNOTATION,
     method=[Method.AUTOMATIC, None, None, None, None],
@@ -59,7 +59,7 @@ youtube_video_item = InformationItem(
     toolflow=["YouTube", "YouTube", "YouTube", "Obsidian", "Obsidian"]
 )
 
-# %% ../nbs/01_create_instances.ipynb 8
+# %% ../nbs/01_create_instances.ipynb 9
 reader = Tool(
     name="Reader",
     info_items=[web_article_item],
@@ -116,7 +116,7 @@ youtube = Tool(
 )
 
 
-# %% ../nbs/01_create_instances.ipynb 9
+# %% ../nbs/01_create_instances.ipynb 10
 web_article_item = InformationItem(
     info_type=InformationType.WEB_ARTICLE,
     method=[Method.MANUAL, None, None, None, None],
