@@ -13,6 +13,15 @@ from .creinst import *
 # %% ../nbs/02_create_vizualisation.ipynb 5
 def create_combined_infoflow_viz(info_items, all_tools):
     if not isinstance(info_items, list): info_items = [info_items]
+
+    # Filter needed info_items based on available tools in all_tools
+    supported_info_items = []
+    for i in info_items:
+        for t in all_tools:
+            if i in t.info_items:
+                supported_info_items.append(i)
+                break # If found at least one, break to avoid useless iterations
+    info_items = supported_info_items
     
     dot = graphviz.Digraph(comment='PKM Workflow')
     dot.attr(rankdir='TB')
@@ -22,6 +31,8 @@ def create_combined_infoflow_viz(info_items, all_tools):
     edges = {}
     
     quality_colors = {PhaseQuality.GREAT: 'lightgreen', PhaseQuality.OK: 'lightblue', PhaseQuality.BAD: 'orange', PhaseQuality.NA: 'lightgray'}
+
+    
     
     for phase in phases:
         with dot.subgraph() as s:

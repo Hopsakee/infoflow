@@ -1,0 +1,8 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - 00_classes_db.ipynb
+      - 01_create_instances.ipynb
+      - 02_create_vizualisation.ipynb
+      - 03_create_webapp.ipynb
