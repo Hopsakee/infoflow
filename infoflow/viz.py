@@ -7,17 +7,28 @@ __all__ = ['create_combined_infoflow_viz']
 
 # %% ../nbs/02_create_vizualisation.ipynb 3
 import graphviz
-from .clasdef import *
+from .classdb import *
 from .creinst import *
 
 # %% ../nbs/02_create_vizualisation.ipynb 5
-def create_combined_infoflow_viz(info_items, all_tools):
+#TODO: Dit moet anders. Je wil een functie om gegeven alle infoitems te vinden die die tool ondersteunt.
+
+def create_combined_infoflow_viz(info_items, tools):
     if not isinstance(info_items, list): info_items = [info_items]
 
-    # Filter needed info_items based on available tools in all_tools
-    supported_info_items = []
+    # Get all the info_items that are supported by the given tools
+    supported_info_items = set()
+    tool_names = [t.name for t in tools]
     for i in info_items:
-        for t in all_tools:
+        tools_flow = i.toolflow
+        tools_unique = set()
+        for t in tools_flow:
+            if t is None: continue
+            tools_unique.update(t if isinstance(t, (list, tuple)) else [t])
+        if tools_unique.issubset(tool_names):
+            supported_info_items.add(i)
+        
+        for t in tools:
             if i in t.info_items:
                 supported_info_items.append(i)
                 break # If found at least one, break to avoid useless iterations
@@ -48,7 +59,7 @@ def create_combined_infoflow_viz(info_items, all_tools):
                         if tool_name is not None:
                             node_id = f"{tool_name.lower()}_{phase}"
                             if node_id not in all_nodes:
-                                tool = next((t for t in all_tools if t.name == tool_name), None)
+                                tool = next((t for t in tools if t.name == tool_name), None)
                                 color = quality_colors[tool.phase_quality[i]] if tool else 'white'
                                 s.node(node_id, f"{tool_name}\n({phase})", shape='hexagon', fillcolor=color, style='filled')
                                 all_nodes.add(node_id)

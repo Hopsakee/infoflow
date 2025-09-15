@@ -14,7 +14,7 @@ import json
 from enum import Enum
 from typing import List, Union, ClassVar
 from dataclasses import dataclass
-from pydantic import BaseModel, field_serializer, field_validator
+from pydantic import BaseModel, field_serializer, field_validator, Field
 from fastlite import *
 from fastcore.test import *
 
@@ -61,22 +61,22 @@ class OrganizationSystem(Enum):
     LINKS = "links"
     JOHNNY_DECIMAL = "johnny_decimal"
 
-# %% ../nbs/00_classes_db.ipynb 15
+# %% ../nbs/00_classes_db.ipynb 16
 class InformationItem(BaseModel):
     """Represents an information item flowing through the PKM workflow."""
-    name: str
-    info_type: InformationType
-    method: list[Union[Method, None]]  # [collect, retrieve, consume, extract, refine]
-    toolflow: list  # [collect, retrieve, consume, extract, refine]
+    name: str = Field(..., description="Name of the information item")
+    info_type: InformationType = Field(..., description="Type of information item, e.g. book, article, video, etc.")
+    method: list[Union[Method, None]] = Field(..., description="Methods used at each phase in order: collect, retrieve, consume, extract, refine")
+    toolflow: list[Union[str, list[str], tuple[str], None]] = Field(..., description="Tools used for this item at each phase in order: collect, retrieve, consume, extract, refine")
 
-    _instances: ClassVar[list[InformationItem]] = []
+    _instances: ClassVar[List[InformationItem]] = []
 
     def __init__(self, **data):
         super().__init__(**data)
         type(self)._instances.append(self)
     
     @classmethod
-    def get_instances(cls) -> List[InformationItem]:
+    def get_instances(cls) -> list[InformationItem]:
         return cls._instances.copy()
     
     @field_serializer('info_type','method', 'toolflow')
@@ -85,18 +85,36 @@ class InformationItem(BaseModel):
             return json.dumps([i.value if hasattr(i, 'value') else i for i in v])
         return str(v.value) if hasattr(v, 'value') else v
     
-    @field_validator('method', 'toolflow', mode='before')
+    @field_validator('info_type','method', 'toolflow', mode='before')
     def parse_json_lists(cls, value):
         if isinstance(value, str):
             return json.loads(value)
         return value
+    
+    @field_validator('toolflow')
+    def validate_tool_names(cls, v):
+        if len(v) != 5:
+            raise ValueError(f"Toolflow must have 5 tools, got {len(v)}")
+        valid_tools = {tool.name for tool in Tool.get_instances()}
+        for p in v: # Phase-tools
+            if p is None:
+                continue
+            elif isinstance(p, str): # Case of single tool in phase
+                if p not in valid_tools: raise ValueError(f"Tool '{p}' does not exist")
+            elif isinstance(p, (list, tuple)): # Case of multiple tools in phase
+                for t in p:
+                    if t not in valid_tools: raise ValueError(f"Tool '{t}' does not exist")
+            else:
+                raise ValueError(f"Tool '{p}' is not a string or list of strings or tuple of strings")
+
+        return v
+
 
 class Tool(BaseModel):
-    """Represents a PKM tool with supported information items."""
-    name: str
-    info_items: list[InformationItem]
-    organization_system: list[OrganizationSystem]
-    phase_quality: list[PhaseQuality]
+    """Represents a PKM tool with information on the supported OrganizationSystems and for each Phase the perceived quality."""
+    name: str = Field(..., description="Name of the tool")
+    organization_system: list[OrganizationSystem] = Field(..., description="Organization systems supported by the tool")
+    phase_quality: list[PhaseQuality] = Field(..., description="Quality of the tool for each phase in order: collect, retrieve, consume, extract, refine")
 
     _instances: ClassVar[List[Tool]] = []
 
@@ -108,26 +126,33 @@ class Tool(BaseModel):
     def get_instances(cls) -> list[Tool]:
         return cls._instances.copy()
     
-    @field_serializer('info_items', 'organization_system', 'phase_quality')
+    @field_serializer('organization_system', 'phase_quality')
     def db_serialize(self, v):
         if isinstance(v, list):
             return json.dumps([i.value if hasattr(i, 'value') else i for i in v])
         return str(v.value) if hasattr(v, 'value') else v
     
-    @field_validator('info_items', 'organization_system', 'phase_quality', mode='before')
+    @field_validator('organization_system', 'phase_quality', mode='before')
     def parse_json_lists(cls, value):
         if isinstance(value, str):
             return json.loads(value)
         return value
+    
+    @field_validator('phase_quality')
+    def validate_phase_quality(cls, v):
+        if len(v) != 5:
+            raise ValueError(f"Phase quality must have 5 phases, got {len(v)}")
+        return v
+    
 
 class Improvement(BaseModel):
     """Tracks workflow improvements needed for better PKM effectiveness."""
-    title: str
-    what: str
-    why: str
-    prio: int
-    tool: Tool
-    phase: Phase
+    title: str = Field(..., description="Title of the improvement")
+    what: str = Field(..., description="What needs to be improved")
+    why: str = Field(..., description="Why is this improvement needed")
+    prio: int = Field(..., description="Priority of the improvement")
+    tool: str = Field(..., description="Tool that needs improvement")
+    phase: Phase = Field(..., description="Phase that needs improvement")
 
     _instances: ClassVar[List[Improvement]] = []
 
@@ -145,13 +170,20 @@ class Improvement(BaseModel):
             return json.dumps([i.value if hasattr(i, 'value') else i for i in v])
         return str(v.value) if hasattr(v, 'value') else v
     
-    @field_validator('tool', 'phase', mode='before')
+    @field_validator('phase', mode='before')
     def parse_json_lists(cls, value):
         if isinstance(value, str):
             return json.loads(value)
         return value
+    
+    @field_validator('tool')
+    def validate_tool_names(cls, v):
+        valid_tools = {tool.name for tool in Tool.get_instances()}
+        if v not in valid_tools:
+            raise ValueError(f"Tool '{tool_name}' does not exist")
+        return v
 
-# %% ../nbs/00_classes_db.ipynb 21
+# %% ../nbs/00_classes_db.ipynb 22
 @dataclass
 class ImprovementDB:
     id: int
@@ -159,7 +191,8 @@ class ImprovementDB:
     what: str
     why: str
     prio: int
-    workflow_routes: str
+    tool: str
+    phase: str
 
 @dataclass
 class InformationItemDB:
@@ -173,16 +206,15 @@ class InformationItemDB:
 class ToolDB:
     id: int
     name: str
-    info_items: str
     organization_system: str
     phase_quality: str
 
-# %% ../nbs/00_classes_db.ipynb 24
+# %% ../nbs/00_classes_db.ipynb 28
 def create_db(loc="static/infoflow.db"):
     db = database(loc)
     db.execute("PRAGMA foreign_keys = ON;")
     inf_tbl = db.create(InformationItemDB)
     tool_tbl = db.create(ToolDB)
     impr_tbl = db.create(ImprovementDB)
-    return inf_tbl, tool_tbl, impr_tbl
+    return db, inf_tbl, tool_tbl, impr_tbl
 
