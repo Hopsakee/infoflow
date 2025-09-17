@@ -17,22 +17,22 @@ def create_combined_infoflow_viz(info_items, tools):
     if not isinstance(info_items, list): info_items = [info_items]
 
     # Get all the info_items that are supported by the given tools
-    supported_info_items = set()
-    tool_names = [t.name for t in tools]
-    for i in info_items:
-        tools_flow = i.toolflow
-        tools_unique = set()
-        for t in tools_flow:
-            if t is None: continue
-            tools_unique.update(t if isinstance(t, (list, tuple)) else [t])
-        if tools_unique.issubset(tool_names):
-            supported_info_items.add(i)
+    # supported_info_items = set()
+    # tool_names = [t.name for t in tools]
+    # for i in info_items:
+    #     tools_flow = i.toolflow
+    #     tools_unique = set()
+    #     for t in tools_flow:
+    #         if t is None: continue
+    #         tools_unique.update(t if isinstance(t, (list, tuple)) else [t])
+    #     if tools_unique.issubset(tool_names):
+    #         supported_info_items.add(i)
         
-        for t in tools:
-            if i in t.info_items:
-                supported_info_items.append(i)
-                break # If found at least one, break to avoid useless iterations
-    info_items = supported_info_items
+    #     for t in tools:
+    #         if i in t.info_items:
+    #             supported_info_items.append(i)
+    #             break # If found at least one, break to avoid useless iterations
+    # info_items = supported_info_items
     
     dot = graphviz.Digraph(comment='PKM Workflow')
     dot.attr(rankdir='TB')

@@ -69,15 +69,15 @@ class InformationItem(BaseModel):
     method: list[Union[Method, None]] = Field(..., description="Methods used at each phase in order: collect, retrieve, consume, extract, refine")
     toolflow: list[Union[str, list[str], tuple[str], None]] = Field(..., description="Tools used for this item at each phase in order: collect, retrieve, consume, extract, refine")
 
-    _instances: ClassVar[List[InformationItem]] = []
+    _instances: ClassVar[Dict[str, InformationItem]] = {}
 
     def __init__(self, **data):
         super().__init__(**data)
-        type(self)._instances.append(self)
+        type(self)._instances[self.name] = self
     
     @classmethod
-    def get_instances(cls) -> list[InformationItem]:
-        return cls._instances.copy()
+    def get_instances(cls) -> Dict[str, InformationItem]:
+        return cls._instances
     
     @field_serializer('info_type','method', 'toolflow')
     def db_serialize(self, v):
@@ -95,7 +95,8 @@ class InformationItem(BaseModel):
     def validate_tool_names(cls, v):
         if len(v) != 5:
             raise ValueError(f"Toolflow must have 5 tools, got {len(v)}")
-        valid_tools = {tool.name for tool in Tool.get_instances()}
+        # valid_tools = {tool.name for tool in Tool.get_instances()}
+        valid_tools = Tool.get_instances().keys()
         for p in v: # Phase-tools
             if p is None:
                 continue
@@ -116,15 +117,15 @@ class Tool(BaseModel):
     organization_system: list[OrganizationSystem] = Field(..., description="Organization systems supported by the tool")
     phase_quality: list[PhaseQuality] = Field(..., description="Quality of the tool for each phase in order: collect, retrieve, consume, extract, refine")
 
-    _instances: ClassVar[List[Tool]] = []
+    _instances: ClassVar[Dict[str, Tool]] = {}
 
     def __init__(self, **data):
         super().__init__(**data)
-        type(self)._instances.append(self)
+        type(self)._instances[self.name] = self
     
     @classmethod
-    def get_instances(cls) -> list[Tool]:
-        return cls._instances.copy()
+    def get_instances(cls) -> Dict[str, Tool]:
+        return cls._instances
     
     @field_serializer('organization_system', 'phase_quality')
     def db_serialize(self, v):
@@ -154,15 +155,15 @@ class Improvement(BaseModel):
     tool: str = Field(..., description="Tool that needs improvement")
     phase: Phase = Field(..., description="Phase that needs improvement")
 
-    _instances: ClassVar[List[Improvement]] = []
+    _instances: ClassVar[Dict[str, Improvement]] = {}
 
     def __init__(self, **data):
         super().__init__(**data)
-        type(self)._instances.append(self)
+        type(self)._instances[self.title] = self
     
     @classmethod
-    def get_instances(cls) -> list[Improvement]:
-        return cls._instances.copy()
+    def get_instances(cls) -> Dict[str, Improvement]:
+        return cls._instances
     
     @field_serializer('tool', 'phase')
     def db_serialize(self, v):
@@ -178,12 +179,12 @@ class Improvement(BaseModel):
     
     @field_validator('tool')
     def validate_tool_names(cls, v):
-        valid_tools = {tool.name for tool in Tool.get_instances()}
+        valid_tools = Tool.get_instances().keys()
         if v not in valid_tools:
-            raise ValueError(f"Tool '{tool_name}' does not exist")
+            raise ValueError(f"Tool '{v}' does not exist")
         return v
 
-# %% ../nbs/00_classes_db.ipynb 22
+# %% ../nbs/00_classes_db.ipynb 26
 @dataclass
 class ImprovementDB:
     id: int
@@ -209,7 +210,7 @@ class ToolDB:
     organization_system: str
     phase_quality: str
 
-# %% ../nbs/00_classes_db.ipynb 28
+# %% ../nbs/00_classes_db.ipynb 32
 def create_db(loc="static/infoflow.db"):
     db = database(loc)
     db.execute("PRAGMA foreign_keys = ON;")
