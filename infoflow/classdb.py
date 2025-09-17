@@ -12,7 +12,7 @@ __all__ = ['InformationType', 'Method', 'Phase', 'PhaseQuality', 'OrganizationSy
 # %% ../nbs/00_classes_db.ipynb 4
 import json
 from enum import Enum
-from typing import List, Union, ClassVar
+from typing import Union, ClassVar
 from dataclasses import dataclass
 from pydantic import BaseModel, field_serializer, field_validator, Field
 from fastlite import *
@@ -184,7 +184,7 @@ class Improvement(BaseModel):
             raise ValueError(f"Tool '{v}' does not exist")
         return v
 
-# %% ../nbs/00_classes_db.ipynb 26
+# %% ../nbs/00_classes_db.ipynb 25
 @dataclass
 class ImprovementDB:
     id: int
@@ -210,7 +210,7 @@ class ToolDB:
     organization_system: str
     phase_quality: str
 
-# %% ../nbs/00_classes_db.ipynb 32
+# %% ../nbs/00_classes_db.ipynb 28
 def create_db(loc="static/infoflow.db"):
     db = database(loc)
     db.execute("PRAGMA foreign_keys = ON;")
