@@ -1,5 +1,5 @@
 from fasthtml.common import *
-from infoflow.clasdef import *
+from infoflow.classdb import *
 from infoflow.creinst import *
 from infoflow.viz import *
 from infoflow.webapp import *
@@ -10,16 +10,19 @@ app, rt = fast_app(
     ]
 )
 
+tools_from_code()
+informationitems_from_code()
 info_items = InformationItem.get_instances()
 tools = Tool.get_instances()
 
 @rt
 def index():
-    viz = create_combined_infoflow_viz(info_items, tools)
+    viz = create_workflow_viz(info_items, tools)
     viz_click = add_onclick_to_nodes(viz._repr_image_svg_xml())
     return (Title("This is how Jelle visualises his information flow"),
             Main(H1("This is how Jelle visualises his information flow"),
             Div(NotStr(viz_click), id="infoflow-graph")))
+            # Div(NotStr(viz._repr_image_svg_xml()), id="infoflow-graph")))
 
 @rt
 def toolphase(tool: str, phase: str):
@@ -27,7 +30,7 @@ def toolphase(tool: str, phase: str):
     tool_obj = next((t for t in tools if t.name.lower() == tool.lower()), None)
     phase_obj = Phase(phase.lower())
 
-    viz = create_combined_infoflow_viz(info_items, [tool_obj])
+    viz = create_workflow_viz(info_items, tools, tool_filter=tool_obj.name)
     viz_click = add_onclick_to_nodes(viz._repr_image_svg_xml())
     
     if tool_obj:

@@ -13,7 +13,7 @@ from fastcore.test import *
 from fasthtml.common import *
 from monsterui.all import *
 
-from .clasdef import *
+from .classdb import *
 from .creinst import *
 from .viz import *
 
