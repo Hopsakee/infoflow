@@ -13,6 +13,8 @@ from fastcore.test import *
 from fasthtml.common import *
 from monsterui.all import *
 
+from hopsa import ossys
+
 from .classdb import *
 from .creinst import *
 from .viz import *
@@ -58,8 +60,8 @@ def add_onclick_to_nodes(svg_str: str):
         if d['fill'] != 'none': # Skipp all info-items
             node_id = d['id']
             tool_phase = n.split('_')
-            tool = tool_phase[0]
-            phase = tool_phase[1]
+            tool = ossys.sanitize_name(tool_phase[0])
+            phase = ossys.sanitize_name(tool_phase[1])
             onclick_attr = f'onclick="htmx.ajax(\'GET\', \'/toolphase?tool={tool}&phase={phase}\', {{target: \'#infoflow-graph\', swap: \'outerHTML\'}})"'
         
         # Replace the <g> tag to add onclick

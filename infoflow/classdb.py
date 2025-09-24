@@ -4,21 +4,20 @@
 
 # %% ../nbs/00_classes_db.ipynb 3
 from __future__ import annotations
-
-# %% auto 0
-__all__ = ['InformationType', 'Method', 'Phase', 'PhaseQuality', 'OrganizationSystem', 'InformationItem', 'Tool', 'Improvement',
-           'ImprovementDB', 'InformationItemDB', 'ToolDB', 'create_db']
-
-# %% ../nbs/00_classes_db.ipynb 4
 import json
 from enum import Enum
 from typing import Union, ClassVar
 from dataclasses import dataclass
-from pydantic import BaseModel, field_serializer, field_validator, Field
+from pydantic import BaseModel, field_serializer, field_validator, Field, computed_field
 from fastlite import *
 from fastcore.test import *
+from hopsa import ossys
 
-# %% ../nbs/00_classes_db.ipynb 8
+# %% auto 0
+__all__ = ['InformationType', 'Method', 'Phase', 'PhaseQuality', 'OrganizationSystem', 'PhaseQualityData', 'Tool',
+           'PhaseMethodData', 'PhaseToolflowData', 'InformationItem', 'Improvement', 'create_db', 'instns_to_db']
+
+# %% ../nbs/00_classes_db.ipynb 9
 class InformationType(Enum):
     """Information content types that flow through the PKM workflow."""
     BOOK = "book"
@@ -61,93 +60,103 @@ class OrganizationSystem(Enum):
     LINKS = "links"
     JOHNNY_DECIMAL = "johnny_decimal"
 
-# %% ../nbs/00_classes_db.ipynb 16
-class InformationItem(BaseModel):
-    """Represents an information item flowing through the PKM workflow."""
-    name: str = Field(..., description="Name of the information item")
-    info_type: InformationType = Field(..., description="Type of information item, e.g. book, article, video, etc.")
-    method: list[Union[Method, None]] = Field(..., description="Methods used at each phase in order: collect, retrieve, consume, extract, refine")
-    toolflow: list[Union[str, list[str], tuple[str], None]] = Field(..., description="Tools used for this item at each phase in order: collect, retrieve, consume, extract, refine")
-
-    _instances: ClassVar[Dict[str, InformationItem]] = {}
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        type(self)._instances[self.name] = self
-    
-    @classmethod
-    def get_instances(cls) -> Dict[str, InformationItem]:
-        return cls._instances
-    
-    @field_serializer('info_type','method', 'toolflow')
-    def db_serialize(self, v):
-        if isinstance(v, list):
-            return json.dumps([i.value if hasattr(i, 'value') else i for i in v])
-        return str(v.value) if hasattr(v, 'value') else v
-    
-    @field_validator('info_type','method', 'toolflow', mode='before')
-    def parse_json_lists(cls, value):
-        if isinstance(value, str):
-            return json.loads(value)
-        return value
-    
-    @field_validator('toolflow')
-    def validate_tool_names(cls, v):
-        if len(v) != 5:
-            raise ValueError(f"Toolflow must have 5 tools, got {len(v)}")
-        # valid_tools = {tool.name for tool in Tool.get_instances()}
-        valid_tools = Tool.get_instances().keys()
-        for p in v: # Phase-tools
-            if p is None:
-                continue
-            elif isinstance(p, str): # Case of single tool in phase
-                if p not in valid_tools: raise ValueError(f"Tool '{p}' does not exist")
-            elif isinstance(p, (list, tuple)): # Case of multiple tools in phase
-                for t in p:
-                    if t not in valid_tools: raise ValueError(f"Tool '{t}' does not exist")
-            else:
-                raise ValueError(f"Tool '{p}' is not a string or list of strings or tuple of strings")
-
-        return v
-
+# %% ../nbs/00_classes_db.ipynb 15
+class PhaseQualityData(BaseModel):
+    collect: PhaseQuality
+    retrieve: PhaseQuality
+    consume: PhaseQuality
+    extract: PhaseQuality
+    refine: PhaseQuality
 
 class Tool(BaseModel):
-    """Represents a PKM tool with information on the supported OrganizationSystems and for each Phase the perceived quality."""
     name: str = Field(..., description="Name of the tool")
     organization_system: list[OrganizationSystem] = Field(..., description="Organization systems supported by the tool")
-    phase_quality: list[PhaseQuality] = Field(..., description="Quality of the tool for each phase in order: collect, retrieve, consume, extract, refine")
+    phase_quality: PhaseQualityData = Field(..., description="Quality of the tool for each phase")
+    collect: str | None = Field(default=None, description="Description how to use tool in collect phase")
+    retrieve: str | None = Field(default=None, description="Description how to use tool in retrieve phase")
+    consume: str | None = Field(default=None, description="Description how to use tool in consume phase")
+    extract: str | None = Field(default=None, description="Description how to use tool in extract phase")
+    refine: str | None = Field(default=None, description="Description how to use tool in refine phase")
+
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return ossys.sanitize_name(self.name)
+
+    def flatten_for_db(self):
+        base = self.model_dump(exclude={'phase_quality'})
+        base.update({'collect_quality': self.phase_quality.collect.value, 'retrieve_quality': self.phase_quality.retrieve.value, 'consume_quality': self.phase_quality.consume.value, 'extract_quality': self.phase_quality.extract.value, 'refine_quality': self.phase_quality.refine.value})
+        return base
 
     _instances: ClassVar[Dict[str, Tool]] = {}
 
     def __init__(self, **data):
         super().__init__(**data)
-        type(self)._instances[self.name] = self
+        type(self)._instances[self.slug] = self
     
     @classmethod
     def get_instances(cls) -> Dict[str, Tool]:
         return cls._instances
     
-    @field_serializer('organization_system', 'phase_quality')
+    @field_serializer('organization_system')
     def db_serialize(self, v):
-        if isinstance(v, list):
-            return json.dumps([i.value if hasattr(i, 'value') else i for i in v])
-        return str(v.value) if hasattr(v, 'value') else v
+        return json.dumps([i.value for i in v])
     
-    @field_validator('organization_system', 'phase_quality', mode='before')
+    @field_validator('organization_system', mode='before')
     def parse_json_lists(cls, value):
-        if isinstance(value, str):
-            return json.loads(value)
+        if isinstance(value, str): return json.loads(value)
         return value
-    
-    @field_validator('phase_quality')
-    def validate_phase_quality(cls, v):
-        if len(v) != 5:
-            raise ValueError(f"Phase quality must have 5 phases, got {len(v)}")
-        return v
-    
 
+# %% ../nbs/00_classes_db.ipynb 16
+class PhaseMethodData(BaseModel):
+    collect: Method | None
+    retrieve: Method | None
+    consume: Method | None
+    extract: Method | None
+    refine: Method | None
+
+class PhaseToolflowData(BaseModel):
+    collect: Union[str, list[str], tuple[str], None]
+    retrieve: Union[str, list[str], tuple[str], None]
+    consume: Union[str, list[str], tuple[str], None]
+    extract: Union[str, list[str], tuple[str], None]
+    refine: Union[str, list[str], tuple[str], None]
+
+
+# %% ../nbs/00_classes_db.ipynb 17
+class InformationItem(BaseModel):
+    name: str = Field(..., description="Name of the information item")
+    info_type: InformationType = Field(..., description="Type of information item, e.g. book, article, video, etc.")
+    method: PhaseMethodData = Field(..., description="Methods used at each phase")
+    toolflow: PhaseToolflowData = Field(..., description="Tools used for this item at each phase")
+
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return ossys.sanitize_name(self.name)
+
+    def flatten_for_db(self):
+        base = self.model_dump(exclude={'method', 'toolflow'})
+        base.update({'collect_method': self.method.collect.value if self.method.collect else None, 'retrieve_method': self.method.retrieve.value if self.method.retrieve else None, 'consume_method': self.method.consume.value if self.method.consume else None, 'extract_method': self.method.extract.value if self.method.extract else None, 'refine_method': self.method.refine.value if self.method.refine else None, 'collect_toolflow': json.dumps(self.toolflow.collect) if isinstance(self.toolflow.collect, (list, tuple)) else self.toolflow.collect, 'retrieve_toolflow': json.dumps(self.toolflow.retrieve) if isinstance(self.toolflow.retrieve, (list, tuple)) else self.toolflow.retrieve, 'consume_toolflow': json.dumps(self.toolflow.consume) if isinstance(self.toolflow.consume, (list, tuple)) else self.toolflow.consume, 'extract_toolflow': json.dumps(self.toolflow.extract) if isinstance(self.toolflow.extract, (list, tuple)) else self.toolflow.extract, 'refine_toolflow': json.dumps(self.toolflow.refine) if isinstance(self.toolflow.refine, (list, tuple)) else self.toolflow.refine})
+        return base
+
+    _instances: ClassVar[Dict[str, InformationItem]] = {}
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        type(self)._instances[self.slug] = self
+    
+    @classmethod
+    def get_instances(cls) -> Dict[str, InformationItem]:
+        return cls._instances
+    
+    @field_serializer('info_type')
+    def db_serialize(self, v):
+        return v.value
+
+
+# %% ../nbs/00_classes_db.ipynb 18
 class Improvement(BaseModel):
-    """Tracks workflow improvements needed for better PKM effectiveness."""
     title: str = Field(..., description="Title of the improvement")
     what: str = Field(..., description="What needs to be improved")
     why: str = Field(..., description="Why is this improvement needed")
@@ -155,60 +164,33 @@ class Improvement(BaseModel):
     tool: str = Field(..., description="Tool that needs improvement")
     phase: Phase = Field(..., description="Phase that needs improvement")
 
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return ossys.sanitize_name(self.title)
+
+    def flatten_for_db(self):
+        return self.model_dump()
+
     _instances: ClassVar[Dict[str, Improvement]] = {}
 
     def __init__(self, **data):
         super().__init__(**data)
-        type(self)._instances[self.title] = self
+        type(self)._instances[self.slug] = self
     
     @classmethod
     def get_instances(cls) -> Dict[str, Improvement]:
         return cls._instances
     
-    @field_serializer('tool', 'phase')
+    @field_serializer('phase')
     def db_serialize(self, v):
-        if isinstance(v, list):
-            return json.dumps([i.value if hasattr(i, 'value') else i for i in v])
-        return str(v.value) if hasattr(v, 'value') else v
-    
-    @field_validator('phase', mode='before')
-    def parse_json_lists(cls, value):
-        if isinstance(value, str):
-            return json.loads(value)
-        return value
+        return v.value
     
     @field_validator('tool')
     def validate_tool_names(cls, v):
         valid_tools = Tool.get_instances().keys()
-        if v not in valid_tools:
-            raise ValueError(f"Tool '{v}' does not exist")
+        if v not in valid_tools: raise ValueError(f"Tool '{v}' does not exist")
         return v
-
-# %% ../nbs/00_classes_db.ipynb 25
-@dataclass
-class ImprovementDB:
-    id: int
-    title: str
-    what: str
-    why: str
-    prio: int
-    tool: str
-    phase: str
-
-@dataclass
-class InformationItemDB:
-    id: int
-    name: str
-    info_type: str
-    method: str
-    toolflow: str
-
-@dataclass
-class ToolDB:
-    id: int
-    name: str
-    organization_system: str
-    phase_quality: str
 
 # %% ../nbs/00_classes_db.ipynb 28
 def create_db(loc="static/infoflow.db"):
@@ -219,3 +201,8 @@ def create_db(loc="static/infoflow.db"):
     impr_tbl = db.create(ImprovementDB)
     return db, inf_tbl, tool_tbl, impr_tbl
 
+
+# %% ../nbs/00_classes_db.ipynb 52
+def instns_to_db(db_tbl, cls_instns):
+    """Add all instances from a given Class to the given database table"""
+    db_tbl.insert_all([t.model_dump() for t in cls_instns.get_instances().values()])
