@@ -15,7 +15,8 @@ from hopsa import ossys
 
 # %% auto 0
 __all__ = ['InformationType', 'Method', 'Phase', 'PhaseQuality', 'OrganizationSystem', 'PhaseQualityData', 'Tool',
-           'PhaseMethodData', 'PhaseToolflowData', 'InformationItem', 'Improvement', 'create_db', 'instns_to_db']
+           'PhaseMethodData', 'PhaseToolflowData', 'InformationItem', 'Improvement', 'create_db',
+           'create_tables_from_pydantic']
 
 # %% ../nbs/00_classes_db.ipynb 9
 class InformationType(Enum):
@@ -84,8 +85,8 @@ class Tool(BaseModel):
         return ossys.sanitize_name(self.name)
 
     def flatten_for_db(self):
-        base = self.model_dump(exclude={'phase_quality'})
-        base.update({'collect_quality': self.phase_quality.collect.value, 'retrieve_quality': self.phase_quality.retrieve.value, 'consume_quality': self.phase_quality.consume.value, 'extract_quality': self.phase_quality.extract.value, 'refine_quality': self.phase_quality.refine.value})
+        base = self.model_dump(exclude={'phase_quality', 'organization_system'})
+        base.update({'organization_system': json.dumps([org.value for org in self.organization_system]), 'collect_quality': self.phase_quality.collect.value, 'retrieve_quality': self.phase_quality.retrieve.value, 'consume_quality': self.phase_quality.consume.value, 'extract_quality': self.phase_quality.extract.value, 'refine_quality': self.phase_quality.refine.value})
         return base
 
     _instances: ClassVar[Dict[str, Tool]] = {}
@@ -98,14 +99,12 @@ class Tool(BaseModel):
     def get_instances(cls) -> Dict[str, Tool]:
         return cls._instances
     
-    @field_serializer('organization_system')
-    def db_serialize(self, v):
-        return json.dumps([i.value for i in v])
-    
-    @field_validator('organization_system', mode='before')
-    def parse_json_lists(cls, value):
-        if isinstance(value, str): return json.loads(value)
-        return value
+  
+    @classmethod
+    def from_db(cls, db_record):
+        phase_quality = PhaseQualityData(collect=PhaseQuality(db_record['collect_quality']), retrieve=PhaseQuality(db_record['retrieve_quality']), consume=PhaseQuality(db_record['consume_quality']), extract=PhaseQuality(db_record['extract_quality']), refine=PhaseQuality(db_record['refine_quality']))
+        org_systems = [OrganizationSystem(s) for s in json.loads(db_record['organization_system'])]
+        return cls(name=db_record['name'], organization_system=org_systems, phase_quality=phase_quality, collect=db_record['collect'], retrieve=db_record['retrieve'], consume=db_record['consume'], extract=db_record['extract'], refine=db_record['refine'])
 
 # %% ../nbs/00_classes_db.ipynb 16
 class PhaseMethodData(BaseModel):
@@ -196,13 +195,21 @@ class Improvement(BaseModel):
 def create_db(loc="static/infoflow.db"):
     db = database(loc)
     db.execute("PRAGMA foreign_keys = ON;")
-    inf_tbl = db.create(InformationItemDB)
-    tool_tbl = db.create(ToolDB)
-    impr_tbl = db.create(ImprovementDB)
-    return db, inf_tbl, tool_tbl, impr_tbl
+    return db
 
 
-# %% ../nbs/00_classes_db.ipynb 52
-def instns_to_db(db_tbl, cls_instns):
-    """Add all instances from a given Class to the given database table"""
-    db_tbl.insert_all([t.model_dump() for t in cls_instns.get_instances().values()])
+# %% ../nbs/00_classes_db.ipynb 31
+def create_tables_from_pydantic(db):
+    sample_tool = Tool(name="Sample", organization_system=[OrganizationSystem.TAGS], phase_quality=PhaseQualityData(collect=PhaseQuality.GREAT, retrieve=PhaseQuality.BAD, consume=PhaseQuality.OK, extract=PhaseQuality.NA, refine=PhaseQuality.GREAT))
+    sample_item = InformationItem(name="Sample", info_type=InformationType.WEB_ARTICLE, method=PhaseMethodData(collect=Method.MANUAL, retrieve=None, consume=None, extract=None, refine=None), toolflow=PhaseToolflowData(collect="Reader", retrieve="Recall", consume=None, extract=None, refine=None))
+    sample_imp = Improvement(title="Sample", what="Test", why="Test", prio=1, tool="sample", phase=Phase.COLLECT)
+    
+    db["tools"].insert(sample_tool.flatten_for_db(), pk="slug")
+    db["information_items"].insert(sample_item.flatten_for_db(), pk="slug") 
+    db["improvements"].insert(sample_imp.flatten_for_db(), pk="slug")
+    
+    db["tools"].delete("sample")
+    db["information_items"].delete("sample")
+    db["improvements"].delete("sample")
+    
+    return db.t.tools, db.t.information_items, db.t.improvements
