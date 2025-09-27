@@ -14,48 +14,95 @@ def tools_from_code():
     reader = Tool(
         name="Reader",
         organization_system=[OrganizationSystem.TAGS],
-        phase_quality=[PhaseQuality.GREAT, PhaseQuality.BAD, PhaseQuality.GREAT, PhaseQuality.NA, PhaseQuality.NA]
+        phase_quality=PhaseQualityData(
+            collect=PhaseQuality.GREAT,
+            retrieve=PhaseQuality.BAD,
+            consume=PhaseQuality.GREAT,
+        )
     )
 
     recall = Tool(
         name="Recall",
         organization_system=[OrganizationSystem.LINKS],
-        phase_quality=[PhaseQuality.GREAT, PhaseQuality.GREAT, PhaseQuality.NA, PhaseQuality.NA, PhaseQuality.GREAT]
+        phase_quality=PhaseQualityData(
+            collect=PhaseQuality.GREAT,
+            retrieve=PhaseQuality.GREAT,
+            consume=PhaseQuality.NA,
+            extract=PhaseQuality.NA,
+            refine=PhaseQuality.GREAT
+        )
     )
 
     readwise = Tool(
         name="Readwise",
         organization_system=[OrganizationSystem.TAGS],
-        phase_quality=[PhaseQuality.NA, PhaseQuality.OK, PhaseQuality.NA, PhaseQuality.GREAT, PhaseQuality.OK]
+        phase_quality=PhaseQualityData(
+            collect=PhaseQuality.NA,
+            retrieve=PhaseQuality.OK,
+            consume=PhaseQuality.NA,
+            extract=PhaseQuality.GREAT,
+            refine=PhaseQuality.OK
+        )
     )
 
     obsidian = Tool(
         name="Obsidian",
         organization_system=[OrganizationSystem.JOHNNY_DECIMAL, OrganizationSystem.LINKS],
-        phase_quality=[PhaseQuality.NA, PhaseQuality.OK, PhaseQuality.OK, PhaseQuality.GREAT, PhaseQuality.GREAT]
+        phase_quality=PhaseQualityData(
+            collect=PhaseQuality.NA,
+            retrieve=PhaseQuality.OK,
+            consume=PhaseQuality.OK,
+            extract=PhaseQuality.GREAT,
+            refine=PhaseQuality.GREAT
+        )
     )
+
     librarything = Tool(
         name="LibraryThing",
         organization_system=[OrganizationSystem.TAGS],
-        phase_quality=[PhaseQuality.OK, PhaseQuality.BAD, PhaseQuality.NA, PhaseQuality.NA, PhaseQuality.NA]
+        phase_quality=PhaseQualityData(
+            collect=PhaseQuality.OK,
+            retrieve=PhaseQuality.BAD,
+            consume=PhaseQuality.NA,
+            extract=PhaseQuality.NA,
+            refine=PhaseQuality.NA
+        )
     )
 
     snipd = Tool(
         name="Snipd",
         organization_system=[OrganizationSystem.FOLDERS],
-        phase_quality=[PhaseQuality.OK, PhaseQuality.BAD, PhaseQuality.GREAT, PhaseQuality.NA, PhaseQuality.NA]
+        phase_quality=PhaseQualityData(
+            collect=PhaseQuality.OK,
+            retrieve=PhaseQuality.BAD,
+            consume=PhaseQuality.GREAT,
+            extract=PhaseQuality.NA,
+            refine=PhaseQuality.NA
+        )
     )
 
     neoreader = Tool(
         name="NeoReader",
         organization_system=[OrganizationSystem.FOLDERS],
-        phase_quality=[PhaseQuality.OK, PhaseQuality.BAD, PhaseQuality.GREAT, PhaseQuality.NA, PhaseQuality.NA]
+        phase_quality=PhaseQualityData(
+            collect=PhaseQuality.OK,
+            retrieve=PhaseQuality.BAD,
+            consume=PhaseQuality.GREAT,
+            extract=PhaseQuality.NA,
+            refine=PhaseQuality.NA
+        )
     )
 
     youtube = Tool(
         name="YouTube",
         organization_system=[OrganizationSystem.FOLDERS],
-        phase_quality=[PhaseQuality.OK, PhaseQuality.BAD, PhaseQuality.OK, PhaseQuality.NA, PhaseQuality.NA]
+        phase_quality=PhaseQualityData(
+            collect=PhaseQuality.OK,
+            retrieve=PhaseQuality.BAD,
+            consume=PhaseQuality.OK,
+            extract=PhaseQuality.NA,
+            refine=PhaseQuality.NA
+        )
     )
 
 
@@ -65,54 +112,113 @@ def informationitems_from_code():
     web_article_item = InformationItem(
         name="Web Article",
         info_type=InformationType.WEB_ARTICLE,
-        method=[Method.MANUAL, None, None, None, None],
-        toolflow=[("Reader", "Recall"), "Recall", "Reader", None, None]
+        method=PhaseMethodData(
+            collect=Method.MANUAL
+        ),
+        toolflow=PhaseToolflowData(
+            collect=("Reader", "Recall"),
+            retrieve="Recall",
+            consume="Reader"
+        )
     )
 
     annotation_item = InformationItem(
         name="Annotation",
         info_type=InformationType.ANNOTATION,
-        method=[Method.AUTOMATIC, None, None, None, None],
-        toolflow=[None, None, None, "Readwise", ("Recall", "Obsidian")]
+        method=PhaseMethodData(
+            collect=Method.AUTOMATIC
+        ),
+        toolflow=PhaseToolflowData(
+            extract="Readwise",
+            refine=("Recall", "Obsidian")
+        )
     )
 
     note_item = InformationItem(
         name="Note",
         info_type=InformationType.NOTE,
-        method=[Method.MANUAL, None, None, None, None],
-        toolflow=[None, "Obsidian", "Obsidian", "Obsidian", "Obsidian"]
+        method=PhaseMethodData(
+            collect=Method.MANUAL
+        ),
+        toolflow=PhaseToolflowData(
+            retrieve="Obsidian",
+            consume="Obsidian",
+            extract="Obsidian",
+            refine="Obsidian"
+        )
     )
+
     book_item = InformationItem(
         name="Book",
         info_type=InformationType.BOOK,
-        method=[Method.MANUAL, None, None, None, None],
-        toolflow=["LibraryThing", "LibraryThing", "NeoReader", "Readwise", "Obsidian"]
+        method=PhaseMethodData(
+            collect=Method.MANUAL
+        ),
+        toolflow=PhaseToolflowData(
+            collect="LibraryThing",
+            retrieve="LibraryThing",
+            consume="NeoReader",
+            extract="Readwise",
+            refine="Obsidian"
+        )
     )
 
     podcast_item = InformationItem(
         name="Podcast",
         info_type=InformationType.PODCAST,
-        method=[Method.AUTOMATIC, None, None, None, None],
-        toolflow=["Snipd", "Snipd", "Snipd", "Readwise", "Obsidian"]
+        method=PhaseMethodData(
+            collect=Method.AUTOMATIC
+        ),
+        toolflow=PhaseToolflowData(
+            collect="Snipd",
+            retrieve="Snipd",
+            consume="Snipd",
+            extract="Readwise",
+            refine="Obsidian"
+        )
     )
 
     research_paper_item = InformationItem(
         name="Research Paper",
         info_type=InformationType.RESEARCH_PAPER,
-        method=[Method.MANUAL, None, None, None, None],
-        toolflow=[("Recall", "NeoReader"), ("Recall", "NeoReader"), "NeoReader", "Readwise", ("Obsidian", "Recall")]
+        method=PhaseMethodData(
+            collect=Method.MANUAL
+        ),
+        toolflow=PhaseToolflowData(
+            collect=("Recall", "NeoReader"),
+            retrieve=("Recall", "NeoReader"),
+            consume="NeoReader",
+            extract="Readwise",
+            refine=("Obsidian", "Recall")
+        )
     )
 
     document_item = InformationItem(
         name="Document",
         info_type=InformationType.DOCUMENT,
-        method=[Method.MANUAL, None, None, None, None],
-        toolflow=["NeoReader", "NeoReader", "NeoReader", "Readwise", ("Obsidian", "Recall")]
+        method=PhaseMethodData(
+            collect=Method.MANUAL
+        ),
+        toolflow=PhaseToolflowData(
+            collect="NeoReader",
+            retrieve="NeoReader",
+            consume="NeoReader",
+            extract="Readwise",
+            refine=("Obsidian", "Recall")
+        )
     )
 
     youtube_video_item = InformationItem(
         name="YouTube Video",
         info_type=InformationType.YOUTUBE_VIDEO,
-        method=[Method.AUTOMATIC, None, None, None, None],
-        toolflow=["YouTube", "YouTube", "YouTube", "Obsidian", "Obsidian"]
+        method=PhaseMethodData(
+            collect=Method.AUTOMATIC
+        ),
+        toolflow=PhaseToolflowData(
+            collect="YouTube",
+            retrieve="YouTube",
+            consume="YouTube",
+            extract="Obsidian",
+            refine="Obsidian"
+        )
     )

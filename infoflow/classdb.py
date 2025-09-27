@@ -63,11 +63,11 @@ class OrganizationSystem(Enum):
 
 # %% ../nbs/00_classes_db.ipynb 15
 class PhaseQualityData(BaseModel):
-    collect: PhaseQuality
-    retrieve: PhaseQuality
-    consume: PhaseQuality
-    extract: PhaseQuality
-    refine: PhaseQuality
+    collect: PhaseQuality = Field(PhaseQuality.NA)
+    retrieve: PhaseQuality = Field(PhaseQuality.NA)
+    consume: PhaseQuality = Field(PhaseQuality.NA)
+    extract: PhaseQuality = Field(PhaseQuality.NA)
+    refine: PhaseQuality = Field(PhaseQuality.NA)
 
 class Tool(BaseModel):
     name: str = Field(..., description="Name of the tool")
@@ -108,21 +108,31 @@ class Tool(BaseModel):
 
 # %% ../nbs/00_classes_db.ipynb 16
 class PhaseMethodData(BaseModel):
-    collect: Method | None
-    retrieve: Method | None
-    consume: Method | None
-    extract: Method | None
-    refine: Method | None
+    collect: Method | None = Field(default=None)
+    retrieve: Method | None = Field(default=None)
+    consume: Method | None = Field(default=None)
+    extract: Method | None = Field(default=None)
+    refine: Method | None = Field(default=None)
 
 class PhaseToolflowData(BaseModel):
-    collect: Union[str, list[str], tuple[str], None]
-    retrieve: Union[str, list[str], tuple[str], None]
-    consume: Union[str, list[str], tuple[str], None]
-    extract: Union[str, list[str], tuple[str], None]
-    refine: Union[str, list[str], tuple[str], None]
+    collect: Union[str, tuple[str, ...], None] = Field(default=None)
+    retrieve: Union[str, tuple[str, ...], None] = Field(default=None)
+    consume: Union[str, tuple[str, ...], None] = Field(default=None)
+    extract: Union[str, tuple[str, ...], None] = Field(default=None)
+    refine: Union[str, tuple[str, ...], None] = Field(default=None)
+
+    @staticmethod
+    def _san(v):
+        if v is None: return None
+        if isinstance(v, str): return ossys.sanitize_name(v)
+        if isinstance(v, tuple):
+            return tuple([ossys.sanitize_name(i) for i in v])
+    
+    @field_validator('collect', 'retrieve', 'consume', 'extract', 'refine', mode='before')
+    def _val(cls, v): return cls._san(v)
 
 
-# %% ../nbs/00_classes_db.ipynb 17
+# %% ../nbs/00_classes_db.ipynb 18
 class InformationItem(BaseModel):
     name: str = Field(..., description="Name of the information item")
     info_type: InformationType = Field(..., description="Type of information item, e.g. book, article, video, etc.")
@@ -154,7 +164,7 @@ class InformationItem(BaseModel):
         return v.value
 
 
-# %% ../nbs/00_classes_db.ipynb 18
+# %% ../nbs/00_classes_db.ipynb 19
 class Improvement(BaseModel):
     title: str = Field(..., description="Title of the improvement")
     what: str = Field(..., description="What needs to be improved")
@@ -191,14 +201,14 @@ class Improvement(BaseModel):
         if v not in valid_tools: raise ValueError(f"Tool '{v}' does not exist")
         return v
 
-# %% ../nbs/00_classes_db.ipynb 28
+# %% ../nbs/00_classes_db.ipynb 29
 def create_db(loc="static/infoflow.db"):
     db = database(loc)
     db.execute("PRAGMA foreign_keys = ON;")
     return db
 
 
-# %% ../nbs/00_classes_db.ipynb 31
+# %% ../nbs/00_classes_db.ipynb 32
 def create_tables_from_pydantic(db):
     sample_tool = Tool(name="Sample", organization_system=[OrganizationSystem.TAGS], phase_quality=PhaseQualityData(collect=PhaseQuality.GREAT, retrieve=PhaseQuality.BAD, consume=PhaseQuality.OK, extract=PhaseQuality.NA, refine=PhaseQuality.GREAT))
     sample_item = InformationItem(name="Sample", info_type=InformationType.WEB_ARTICLE, method=PhaseMethodData(collect=Method.MANUAL, retrieve=None, consume=None, extract=None, refine=None), toolflow=PhaseToolflowData(collect="Reader", retrieve="Recall", consume=None, extract=None, refine=None))
