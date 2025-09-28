@@ -114,6 +114,7 @@ class PhaseMethodData(BaseModel):
     extract: Method | None = Field(default=None)
     refine: Method | None = Field(default=None)
 
+# %% ../nbs/00_classes_db.ipynb 18
 class PhaseToolflowData(BaseModel):
     collect: Union[str, tuple[str, ...], None] = Field(default=None)
     retrieve: Union[str, tuple[str, ...], None] = Field(default=None)
@@ -125,14 +126,14 @@ class PhaseToolflowData(BaseModel):
     def _san(v):
         if v is None: return None
         if isinstance(v, str): return ossys.sanitize_name(v)
-        if isinstance(v, tuple):
+        if isinstance(v, (list, tuple)):
             return tuple([ossys.sanitize_name(i) for i in v])
     
     @field_validator('collect', 'retrieve', 'consume', 'extract', 'refine', mode='before')
     def _val(cls, v): return cls._san(v)
 
 
-# %% ../nbs/00_classes_db.ipynb 18
+# %% ../nbs/00_classes_db.ipynb 21
 class InformationItem(BaseModel):
     name: str = Field(..., description="Name of the information item")
     info_type: InformationType = Field(..., description="Type of information item, e.g. book, article, video, etc.")
@@ -164,7 +165,7 @@ class InformationItem(BaseModel):
         return v.value
 
 
-# %% ../nbs/00_classes_db.ipynb 19
+# %% ../nbs/00_classes_db.ipynb 22
 class Improvement(BaseModel):
     title: str = Field(..., description="Title of the improvement")
     what: str = Field(..., description="What needs to be improved")
