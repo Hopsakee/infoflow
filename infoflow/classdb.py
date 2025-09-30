@@ -16,7 +16,7 @@ from hopsa import ossys
 # %% auto 0
 __all__ = ['InformationType', 'Method', 'Phase', 'PhaseQuality', 'OrganizationSystem', 'PhaseQualityData', 'Tool',
            'PhaseMethodData', 'PhaseToolflowData', 'InformationItem', 'Improvement', 'create_db',
-           'create_tables_from_pydantic']
+           'create_tables_from_pydantic', 'dict_from_db']
 
 # %% ../nbs/00_classes_db.ipynb 9
 class InformationType(Enum):
@@ -99,7 +99,6 @@ class Tool(BaseModel):
     def get_instances(cls) -> Dict[str, Tool]:
         return cls._instances
     
-  
     @classmethod
     def from_db(cls, db_record):
         phase_quality = PhaseQualityData(collect=PhaseQuality(db_record['collect_quality']), retrieve=PhaseQuality(db_record['retrieve_quality']), consume=PhaseQuality(db_record['consume_quality']), extract=PhaseQuality(db_record['extract_quality']), refine=PhaseQuality(db_record['refine_quality']))
@@ -164,6 +163,24 @@ class InformationItem(BaseModel):
     def db_serialize(self, v):
         return v.value
 
+    @staticmethod
+    def _parse_toolflow(v):
+        """function to parse toolflow. Need to handle none, string and list"""
+        if v is None: return None
+        if isinstance(v, str) and v.startswith('['): return json.loads(v)
+        return v
+        
+    @classmethod
+    def from_db(cls, db_record):
+        # We need `json.loads` here because the toolflows are stored as JSON strings in the database to allow for lists
+        toolflow = PhaseToolflowData(collect=cls._parse_toolflow(db_record['collect_toolflow']),
+                                    retrieve=cls._parse_toolflow(db_record['retrieve_toolflow']),
+                                    consume=cls._parse_toolflow(db_record['consume_toolflow']),
+                                    extract=cls._parse_toolflow(db_record['extract_toolflow']),
+                                    refine=cls._parse_toolflow(db_record['refine_toolflow']))
+        method = PhaseMethodData(collect=db_record['collect_method'], retrieve=db_record['retrieve_method'], consume=db_record['consume_method'], extract=db_record['extract_method'], refine=db_record['refine_method'])
+        info_type = InformationType(db_record['info_type'])
+        return cls(name=db_record['name'], info_type=info_type, method=method, toolflow=toolflow)
 
 # %% ../nbs/00_classes_db.ipynb 22
 class Improvement(BaseModel):
@@ -201,16 +218,24 @@ class Improvement(BaseModel):
         valid_tools = Tool.get_instances().keys()
         if v not in valid_tools: raise ValueError(f"Tool '{v}' does not exist")
         return v
+    
+    @classmethod
+    def from_db(cls, db_record):
+        phase = Phase(db_record['phase'])
+        return cls(title=db_record['title'], what=db_record['what'], why=db_record['why'], prio=db_record['prio'], tool=db_record['tool'], phase=phase)
+
 
 # %% ../nbs/00_classes_db.ipynb 31
-def create_db(loc="static/infoflow.db"):
+def create_db(
+    loc: str = "../data/infoflow.db" # Location of the SQLite database
+) -> Database:
     db = database(loc)
     db.execute("PRAGMA foreign_keys = ON;")
     return db
 
-
 # %% ../nbs/00_classes_db.ipynb 34
-def create_tables_from_pydantic(db):
+def create_tables_from_pydantic(
+    db: Database) -> Tuple[apswutils.db.Table, apswutils.db.Table, apswutils.db.Table]:
     sample_tool = Tool(name="Sample", organization_system=[OrganizationSystem.TAGS], phase_quality=PhaseQualityData(collect=PhaseQuality.GREAT, retrieve=PhaseQuality.BAD, consume=PhaseQuality.OK, extract=PhaseQuality.NA, refine=PhaseQuality.GREAT))
     sample_item = InformationItem(name="Sample", info_type=InformationType.WEB_ARTICLE, method=PhaseMethodData(collect=Method.MANUAL, retrieve=None, consume=None, extract=None, refine=None), toolflow=PhaseToolflowData(collect="Reader", retrieve="Recall", consume=None, extract=None, refine=None))
     sample_imp = Improvement(title="Sample", what="Test", why="Test", prio=1, tool="sample", phase=Phase.COLLECT)
@@ -224,3 +249,14 @@ def create_tables_from_pydantic(db):
     db["improvements"].delete("sample")
     
     return db.t.tools, db.t.information_items, db.t.improvements
+
+# %% ../nbs/00_classes_db.ipynb 63
+def dict_from_db(
+        db_table: Table,
+        class_table: BaseModel
+    ) -> dict[str, BaseModel]:
+    """Converts a database table to a dictionary of pydantic models."""
+    d = {}
+    for t in db_table():
+        d[t["slug"]] = class_table.from_db(t)
+    return d
