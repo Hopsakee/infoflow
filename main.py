@@ -736,9 +736,12 @@ def tool_edit(slug: str):
 async def tool_save(slug: str, req):
     form_data = await req.form()
     print(f"Form data: {dict(form_data)}")
+    print(type(form_data))
+    print(form_data.getlist("organization_system"))
     
     try:
         org_systems = [OrganizationSystem(val) for val in form_data.getlist("organization_system")]
+        print(org_systems)
         phase_quality_data = {}
         for phase in ["collect", "retrieve", "consume", "extract", "refine"]:
             quality_val = form_data.get(f"{phase}_quality")
@@ -746,6 +749,8 @@ async def tool_save(slug: str, req):
             else: phase_quality_data[phase] = PhaseQuality.NA
         
         phase_quality = PhaseQualityData(**phase_quality_data)
+
+        print(phase_quality)
         
         updated_tool = Tool(
             name=form_data.get("name"),
@@ -753,8 +758,11 @@ async def tool_save(slug: str, req):
             phase_quality=phase_quality,
             **{phase: form_data.get(phase) or None for phase in ["collect", "retrieve", "consume", "extract", "refine"]}
         )
+
+        print(updated_tool)
+        print(f"Flattened: {updated_tool.flatten_for_db()}")
         
-        db.t.tools.update(slug, updated_tool.flatten_for_db())
+        db.t.tools.update(updated_tool.flatten_for_db())
         return RedirectResponse(url=f"/tool?slug={updated_tool.slug}", status_code=303)
         
     except Exception as e:

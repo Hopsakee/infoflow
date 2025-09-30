@@ -202,14 +202,14 @@ class Improvement(BaseModel):
         if v not in valid_tools: raise ValueError(f"Tool '{v}' does not exist")
         return v
 
-# %% ../nbs/00_classes_db.ipynb 29
+# %% ../nbs/00_classes_db.ipynb 31
 def create_db(loc="static/infoflow.db"):
     db = database(loc)
     db.execute("PRAGMA foreign_keys = ON;")
     return db
 
 
-# %% ../nbs/00_classes_db.ipynb 32
+# %% ../nbs/00_classes_db.ipynb 34
 def create_tables_from_pydantic(db):
     sample_tool = Tool(name="Sample", organization_system=[OrganizationSystem.TAGS], phase_quality=PhaseQualityData(collect=PhaseQuality.GREAT, retrieve=PhaseQuality.BAD, consume=PhaseQuality.OK, extract=PhaseQuality.NA, refine=PhaseQuality.GREAT))
     sample_item = InformationItem(name="Sample", info_type=InformationType.WEB_ARTICLE, method=PhaseMethodData(collect=Method.MANUAL, retrieve=None, consume=None, extract=None, refine=None), toolflow=PhaseToolflowData(collect="Reader", retrieve="Recall", consume=None, extract=None, refine=None))
