@@ -27,45 +27,48 @@ app, rt = fast_app(
     ],
 )
 
+def WorkflowViz(slug: str = None):
+    tools_dict = dict_from_db(db.t.tools, Tool)
+    items_dict = dict_from_db(db.t.information_items, InformationItem)
+    viz = create_workflow_viz(items=items_dict, tools=tools_dict, tool_filter=slug)
+    svg_str = viz._repr_image_svg_xml()
+    interactive_svg = add_onclick_to_nodes(svg_str)
+    return Div(NotStr(interactive_svg), id="infoflow-graph", style="text-align:center; margin:20px;")
+
+top_nav = NavBar(
+            Button("← Back to Index", hx_get="/", hx_target="body", hx_swap="innerHTML", cls=ButtonT.text),
+            Button("Theme Switcher", hx_get="/theme_switcher", hx_target="#main-content", hx_swap="innerHTML", cls=ButtonT.text),
+            brand=H2("Information Flow Dashboard"),
+        )
 
 @rt
 def index():
-    tools_dict = dict_from_db(db.t.tools, Tool)
-    inf_dict = dict_from_db(db.t.information_items, InformationItem)
-    viz = create_workflow_viz(items=inf_dict, tools=tools_dict)
-    svg_str = viz._repr_image_svg_xml()
-    interactive_svg = add_onclick_to_nodes(svg_str)
-    
-    return Div(
-        H1("Information Flow Dashboard", style="text-align:center; margin:20px;"),
-        Div(NotStr(interactive_svg), id="infoflow-graph", style="text-align:center; margin:20px;")
+    return Title("Information Flow Dashboard"), Container(
+        top_nav,
+        DivCentered(WorkflowViz(), id="main-content"),
     )
 
 @rt
+def theme_switcher():
+    return ThemePicker()
+
+@rt
 def tool(slug: str):
-    tool_row = db.t.tools[slug]
-    tool = Tool.from_db(tool_row)
-    
-    tools_dict = dict_from_db(db.t.tools, Tool)
-    inf_dict = dict_from_db(db.t.information_items, InformationItem)
-    tool_viz = create_workflow_viz(tool_filter=slug, items=inf_dict, tools=tools_dict)
-    svg_str = tool_viz._repr_image_svg_xml()
-    svg_str = add_onclick_to_nodes(svg_str)
+    tool_dict = db.t.tools[slug]
+    tool = Tool.from_db(tool_dict)
     
     return Titled(f"Tool: {tool.name}",
         DivFullySpaced(
-            Button("← Back to Index", hx_get="/", hx_target="body", hx_swap="innerHTML"),
-            Button("Edit", hx_get=f"/tool_edit?slug={slug}", hx_target="body", hx_swap="innerHTML"),
-            cls="uk-margin-bottom"
-        ),
-        DivLAligned(
             Card(
                 H3("Workflow Visualization"),
-                Div(NotStr(svg_str), style="text-align:center;"),
-                style="width:45%; margin-right:20px;"
+                WorkflowViz(slug),
+                style="margin-right:20px;"
             ),
             Card(
-                H3("Tool Details"),
+                DivFullySpaced(
+                    H3("Tool Details"),
+                    Button("Edit", hx_get=f"/tool_edit?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
+                ),
                 DivVStacked(
                     P(Strong("Name: "), tool.name),
                     P(Strong("Organization System: "), ", ".join([org.value for org in tool.organization_system])),
@@ -77,11 +80,10 @@ def tool(slug: str):
                     *[Div(Strong(f"{phase.title()}: "), P(getattr(tool, phase) or "Not specified")) for phase in ["collect", "retrieve", "consume", "extract", "refine"] if getattr(tool, phase)],
                     cls="space-y-2", style="align-items:flex-start;"
                 ),
-                style="width:55%;"
             ),
             style="display:flex; align-items:flex-start;"
         ),
-        id="infoflow-graph"
+        id="main-content"
     )
 
 @rt
@@ -96,7 +98,7 @@ def tool_edit(slug: str):
     
     return Titled(f"Edit Tool: {tool.name}",
         DivFullySpaced(
-            Button("← Back to Tool", hx_get=f"/tool?slug={slug}", hx_target="body", hx_swap="innerHTML"),
+            Button("← Back to Tool", hx_get=f"/tool?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
             cls="uk-margin-bottom"
         ),
         Card(
@@ -128,7 +130,8 @@ def tool_edit(slug: str):
                 hx_target="body",
                 hx_swap="innerHTML"
             )
-        )
+        ),
+        id="main-content"
     )
 
 @rt

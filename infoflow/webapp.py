@@ -54,7 +54,6 @@ def dict_svgnodes(svg_str: str):
 def add_onclick_to_nodes(svg_str: str):
     # Get node information
     nodes = dict_svgnodes(svg_str)
-    print(nodes)
     
     # Add onclick to each Tool-node's <g> element
     for n, d in nodes.items():
@@ -63,7 +62,7 @@ def add_onclick_to_nodes(svg_str: str):
             tool_phase = n.split('_')
             tool = ossys.sanitize_name(tool_phase[0])
             phase = ossys.sanitize_name(tool_phase[1])
-            onclick_attr = f'onclick="htmx.ajax(\'GET\', \'/tool?slug={tool}\', {{target: \'#infoflow-graph\', swap: \'outerHTML\'}})"'
+            onclick_attr = f'onclick="htmx.ajax(\'GET\', \'/tool?slug={tool}\', {{target: \'#main-content\', swap: \'outerHTML\'}})"'
         
         # Replace the <g> tag to add onclick
         old_pattern = f'<g id="{node_id}" class="node">'
