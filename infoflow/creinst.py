@@ -224,7 +224,20 @@ def informationitems_from_code():
         )
     )
 
-# %% ../nbs/01_create_instances.ipynb 20
+    web_article_item = InformationItem(
+            name="Web Article",
+            info_type=InformationType.WEB_ARTICLE,
+            method=PhaseMethodData(
+                collect=Method.MANUAL
+            ),
+            toolflow=PhaseToolflowData(
+                collect=("Reader", "Recall"),
+                retrieve="Recall",
+                consume="Reader"
+            )
+        )
+
+# %% ../nbs/01_create_instances.ipynb 18
 def db_from_instanes(
     db_loc: Path = "../data/infoflow.db", # Location of the database, usually "../data/infoflow.db"
     toolclass: Tool = Tool, # De Tool dataclass, containing all the tool intances

@@ -36,6 +36,7 @@ class InformationType(Enum):
 
 class Method(Enum):
     """How actions are performed - manually or automatically."""
+    NA = "na"
     MANUAL = "manual"
     AUTOMATIC = "automatic"
 

@@ -19,7 +19,7 @@ from .classdb import *
 from .creinst import *
 from .viz import *
 
-# %% ../nbs/03_create_webapp.ipynb 17
+# %% ../nbs/03_create_webapp.ipynb 18
 def dict_svgnodes(svg_str: str):
    # Remove all xmlns declarations to get rid of namespace declaration when using .findall
    cln_svg = re.sub(r'xmlns[^=]*="[^"]*"', '', svg_str)
@@ -50,19 +50,25 @@ def dict_svgnodes(svg_str: str):
 
    return nodes
 
-# %% ../nbs/03_create_webapp.ipynb 21
+# %% ../nbs/03_create_webapp.ipynb 22
 def add_onclick_to_nodes(svg_str: str):
     # Get node information
     nodes = dict_svgnodes(svg_str)
     
     # Add onclick to each Tool-node's <g> element
     for n, d in nodes.items():
+        node_id = d['id']
         if d['fill'] != 'none': # Skipp all info-items
-            node_id = d['id']
             tool_phase = n.split('_')
             tool = ossys.sanitize_name(tool_phase[0])
             phase = ossys.sanitize_name(tool_phase[1])
             onclick_attr = f'onclick="htmx.ajax(\'GET\', \'/tool?slug={tool}\', {{target: \'#main-content\', swap: \'outerHTML\'}})"'
+        if d['fill'] == 'none': # Get all info-items
+            name_split = n.split('_')
+            resource = n.split('_')[1:] # remove the "source" part of the name
+            resource = '_'.join(resource)
+            resource = ossys.sanitize_name(resource)
+            onclick_attr = f'onclick="htmx.ajax(\'GET\', \'/resource?slug={resource}\', {{target: \'#main-content\', swap: \'outerHTML\'}})"'
         
         # Replace the <g> tag to add onclick
         old_pattern = f'<g id="{node_id}" class="node">'
