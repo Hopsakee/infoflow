@@ -13,6 +13,7 @@ from .classdb import *
 def tools_from_code():
     """Create all Tool instances as defined in the code."""
     reader = Tool(
+        id=101,
         name="Reader",
         organization_system=[OrganizationSystem.TAGS],
         phase_quality=PhaseQualityData(
@@ -23,6 +24,7 @@ def tools_from_code():
     )
 
     recall = Tool(
+        id=102,
         name="Recall",
         organization_system=[OrganizationSystem.LINKS],
         phase_quality=PhaseQualityData(
@@ -35,6 +37,7 @@ def tools_from_code():
     )
 
     readwise = Tool(
+        id=103,
         name="Readwise",
         organization_system=[OrganizationSystem.TAGS],
         phase_quality=PhaseQualityData(
@@ -47,6 +50,7 @@ def tools_from_code():
     )
 
     obsidian = Tool(
+        id=104,
         name="Obsidian",
         organization_system=[OrganizationSystem.JOHNNY_DECIMAL, OrganizationSystem.LINKS],
         phase_quality=PhaseQualityData(
@@ -59,6 +63,7 @@ def tools_from_code():
     )
 
     librarything = Tool(
+        id=105,
         name="LibraryThing",
         organization_system=[OrganizationSystem.TAGS],
         phase_quality=PhaseQualityData(
@@ -71,6 +76,7 @@ def tools_from_code():
     )
 
     snipd = Tool(
+        id=106,
         name="Snipd",
         organization_system=[OrganizationSystem.FOLDERS],
         phase_quality=PhaseQualityData(
@@ -83,6 +89,7 @@ def tools_from_code():
     )
 
     neoreader = Tool(
+        id=107,
         name="NeoReader",
         organization_system=[OrganizationSystem.FOLDERS],
         phase_quality=PhaseQualityData(
@@ -95,6 +102,7 @@ def tools_from_code():
     )
 
     youtube = Tool(
+        id=108,
         name="YouTube",
         organization_system=[OrganizationSystem.FOLDERS],
         phase_quality=PhaseQualityData(
@@ -111,6 +119,7 @@ def tools_from_code():
 def informationitems_from_code():
     """Create all InformationItem instances as defined in the code."""
     web_article_item = InformationItem(
+        id=201,
         name="Web Article",
         info_type=InformationType.WEB_ARTICLE,
         method=PhaseMethodData(
@@ -124,6 +133,7 @@ def informationitems_from_code():
     )
 
     annotation_item = InformationItem(
+        id=202,
         name="Annotation",
         info_type=InformationType.ANNOTATION,
         method=PhaseMethodData(
@@ -136,6 +146,7 @@ def informationitems_from_code():
     )
 
     note_item = InformationItem(
+        id=203,
         name="Note",
         info_type=InformationType.NOTE,
         method=PhaseMethodData(
@@ -150,6 +161,7 @@ def informationitems_from_code():
     )
 
     book_item = InformationItem(
+        id=204,
         name="Book",
         info_type=InformationType.BOOK,
         method=PhaseMethodData(
@@ -165,6 +177,7 @@ def informationitems_from_code():
     )
 
     podcast_item = InformationItem(
+        id=205,
         name="Podcast",
         info_type=InformationType.PODCAST,
         method=PhaseMethodData(
@@ -180,6 +193,7 @@ def informationitems_from_code():
     )
 
     research_paper_item = InformationItem(
+        id=206,
         name="Research Paper",
         info_type=InformationType.RESEARCH_PAPER,
         method=PhaseMethodData(
@@ -195,6 +209,7 @@ def informationitems_from_code():
     )
 
     document_item = InformationItem(
+        id=207,
         name="Document",
         info_type=InformationType.DOCUMENT,
         method=PhaseMethodData(
@@ -210,6 +225,7 @@ def informationitems_from_code():
     )
 
     youtube_video_item = InformationItem(
+        id=208,
         name="YouTube Video",
         info_type=InformationType.YOUTUBE_VIDEO,
         method=PhaseMethodData(
@@ -225,17 +241,18 @@ def informationitems_from_code():
     )
 
     web_article_item = InformationItem(
-            name="Web Article",
-            info_type=InformationType.WEB_ARTICLE,
-            method=PhaseMethodData(
-                collect=Method.MANUAL
-            ),
-            toolflow=PhaseToolflowData(
-                collect=("Reader", "Recall"),
-                retrieve="Recall",
-                consume="Reader"
-            )
+        id=209,
+        name="Web Article",
+        info_type=InformationType.WEB_ARTICLE,
+        method=PhaseMethodData(
+            collect=Method.MANUAL
+        ),
+        toolflow=PhaseToolflowData(
+            collect=("Reader", "Recall"),
+            retrieve="Recall",
+            consume="Reader"
         )
+    )
 
 # %% ../nbs/01_create_instances.ipynb 18
 def db_from_instanes(
@@ -245,7 +262,7 @@ def db_from_instanes(
     ) -> None:
     """Create a fresh database filled with all the instances created in this notebook."""
     db = create_db(db_loc)
-    create_tables_from_pydantic(db)
+    create_tables_from_pydantic(db, [Tool, InformationItem, Improvement])
     tools_from_code()
     informationitems_from_code()
     for t in toolclass.get_instances().values(): db.t.tools.insert(t.flatten_for_db())

@@ -58,18 +58,22 @@ def _improvement_form_fields(imp=None, tool=None):
         LabelInput("Title", name="title", value=imp.title if imp else "", required=True),
         LabelTextArea("What needs to be improved", name="what", value=imp.what if imp else "", required=True),
         LabelTextArea("Why is this improvement needed", name="why", value=imp.why if imp else "", required=True),
+        LabelTextArea("How to build this improvement", name="how", value=imp.how if imp else "", required=True),
         LabelInput("Priority", name="prio", value=str(imp.prio) if imp else "1", type="number", required=True),
         LabelSelect(*tool_options, label="Tool", name="tool"),
-        LabelSelect(*phase_options, label="Phase", name="phase")
+        LabelSelect(*phase_options, label="Phase", name="phase"),
+        LabelInput("ID", name="id", value=imp.id if imp else "", type="hidden"),
     )
 
 
 async def _save_improvement(form_data, slug=None):
     """Save improvement (create new or update existing)"""
     new_imp = Improvement(
+        id=form_data.get("id"),
         title=form_data.get("title"),
         what=form_data.get("what"),
         why=form_data.get("why"),
+        how=form_data.get("how"),
         prio=int(form_data.get("prio")),
         tool=form_data.get("tool"),
         phase=Phase(form_data.get("phase"))
@@ -102,7 +106,7 @@ def theme_switcher():
 
 @rt
 def tool(slug: str):
-    tool_dict = db.t.tools[slug]
+    tool_dict = db.t.tools("slug=?", (slug,))[0]
     tool = Tool.from_db(tool_dict)
     
     return Titled(f"Tool: {tool.name}",
@@ -136,7 +140,7 @@ def tool(slug: str):
 
 @rt
 def tool_edit(slug: str):
-    tool_row = db.t.tools[slug]
+    tool_row = db.t.tools("slug=?", (slug,))[0]
     tool = Tool.from_db(tool_row)
     
     phase_selects = []
@@ -169,10 +173,16 @@ def tool_edit(slug: str):
                     *[LabelTextArea(f"{phase.title()}", name=phase, value=getattr(tool, phase) or "", placeholder=f"Description for {phase} phase", cls="w-full") for phase in ["collect", "retrieve", "consume", "extract", "refine"]],
                     cls="uk-margin-small"
                 ),
-                DivLAligned(
-                    Button("Save Changes", type="submit", cls=ButtonT.primary),
-                    Button("Cancel", hx_get=f"/tool?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
-                    cls="uk-margin-top"
+                DivHStacked(
+                    DivLAligned(
+                        Button("Save Changes", type="submit", cls=ButtonT.primary),
+                        Button("Cancel", hx_get=f"/tool?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
+                        cls="uk-margin-top"
+                    ),
+                    DivRAligned(
+                        LabelInput(f"id: {tool.id}", name="id", value=tool.id, type="hidden"),
+                        cls="uk-margin-top"
+                    ),
                 ),
                 hx_post=f"/tool_save?slug={slug}",
                 hx_target="#main-content",
@@ -197,6 +207,7 @@ async def tool_save(slug: str, req):
         phase_quality = PhaseQualityData(**phase_quality_data)
 
         updated_tool = Tool(
+            id=form_data.get("id"),
             name=form_data.get("name"),
             organization_system=org_systems,
             phase_quality=phase_quality,
@@ -215,7 +226,7 @@ async def tool_save(slug: str, req):
         )
 @rt
 def resource(slug: str):
-    item_dict = db.t.information_items[slug]
+    item_dict = db.t.information_items("slug=?", (slug,))[0]
     item = InformationItem.from_db(item_dict)
     
     return Titled(f"Information Item: {item.name}",
@@ -249,7 +260,7 @@ def resource(slug: str):
 
 @rt
 def resource_edit(slug: str):
-    item_row = db.t.information_items[slug]
+    item_row = db.t.information_items("slug=?", (slug,))[0]
     item = InformationItem.from_db(item_row)
     
     info_type_options = [Option(it.value.replace("_", " ").title(), value=it.value, selected=(it.value==item.info_type.value)) for it in InformationType]
@@ -288,10 +299,16 @@ def resource_edit(slug: str):
                     *[LabelInput(f"{phase.title()}", name=f"{phase}_toolflow", value=toolflow_value(phase), placeholder=f"Tool(s) for {phase} phase (comma-separated for multiple)", cls="w-full") for phase in ["collect", "retrieve", "consume", "extract", "refine"]],
                     cls="uk-margin-small"
                 ),
-                DivLAligned(
-                    Button("Save Changes", type="submit", cls=ButtonT.primary),
-                    Button("Cancel", hx_get=f"/resource?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
-                    cls="uk-margin-top"
+                DivFullySpaced(
+                    DivLAligned(
+                        Button("Save Changes", type="submit", cls=ButtonT.primary),
+                        Button("Cancel", hx_get=f"/resource?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
+                        cls="uk-margin-top"
+                    ),
+                    DivRAligned(
+                        LabelInput(f"id: {item.id}", name="id", value=item.id, type="hidden"),
+                        cls="uk-margin-top"
+                    )
                 ),
                 hx_post=f"/resource_save?slug={slug}",
                 hx_target="#main-content",
@@ -329,6 +346,7 @@ async def resource_save(slug: str, req):
         toolflow = PhaseToolflowData(**phase_toolflow_data)
         
         updated_item = InformationItem(
+            id=form_data.get("id"),
             name=form_data.get("name"),
             info_type=info_type,
             method=method,
@@ -387,7 +405,7 @@ def all_tools_improvements():
 
 @rt
 def improvement(slug: str):
-    imp_row = db.t.improvements[slug]
+    imp_row = db.t.improvements("slug=?", (slug,))[0]
     imp = Improvement(**imp_row)
     
     prio_color = "#0066cc" if imp.prio == 1 else "#666666"
@@ -400,7 +418,7 @@ def improvement(slug: str):
         ),
         Card(
             DivVStacked(
-                H2(imp.title, style="text-align:center; color:#0066cc;"),
+                H2(imp.title, style="color:#0066cc;"),
                 H4(f"Tool: {imp.tool.title()}", style="text-align:center; cursor:pointer;", hx_get=f"/tool?slug={imp.tool}", hx_target="#main-content", hx_swap="innerHTML"),
                 Hr(),
                 DivVStacked(
@@ -412,6 +430,10 @@ def improvement(slug: str):
                     Hr(),
                     H4("Why is this improvement needed"),
                     P(imp.why),
+                    Hr(),
+                    H4("How to build this improvement"),
+                    P(imp.how),
+                    I(f"id: {imp.id}"),
                     cls="space-y-3"
                 ),
                 style="width:100%;"
@@ -444,7 +466,7 @@ def improvement_add(tool: str):
 
 @rt
 def improvement_edit(slug: str):
-    imp_row = db.t.improvements[slug]
+    imp_row = db.t.improvements("slug=?", (slug,))[0]
     imp = Improvement(**imp_row)
     
     return Titled(f"Edit Improvement: {imp.title}",
