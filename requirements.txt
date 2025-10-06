@@ -1,0 +1,8 @@
+fh-pydantic-form>=0.3.7
+graphix>=0.3.2
+graphviz>=0.21
+hopsa>=0.3.0
+monsterui>=1.0.26
+pre-commit>=4.3.0
+pydantic>=2.11.7
+python-fasthtml>=0.12.25

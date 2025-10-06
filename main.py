@@ -20,6 +20,8 @@ from infoflow.webapp import *
 
 db = create_db("data/infoflow.db")
 
+[Tool.from_db(t) for t in db.t.tools()]
+
 app, rt = fast_app(
     hdrs=[
         Style(".node { cursor: pointer; }"),
@@ -44,8 +46,45 @@ def format_toolflow(toolflow_val):
     if isinstance(toolflow_val, (list, tuple)): return ", ".join(toolflow_val)
     return toolflow_val
 
+def _improvement_form_fields(imp=None, tool=None):
+    """Build form fields for improvement (create or edit)"""
+    all_tools = db.t.tools()
+    tool_slug = imp.tool if imp else tool
+    
+    tool_options = [Option(t['name'], value=t['slug'], selected=t['slug']==tool_slug) for t in all_tools]
+    phase_options = [Option(p.value.title(), value=p.value, selected=(imp and p.value==imp.phase.value)) for p in Phase]
+    
+    return (
+        LabelInput("Title", name="title", value=imp.title if imp else "", required=True),
+        LabelTextArea("What needs to be improved", name="what", value=imp.what if imp else "", required=True),
+        LabelTextArea("Why is this improvement needed", name="why", value=imp.why if imp else "", required=True),
+        LabelInput("Priority", name="prio", value=str(imp.prio) if imp else "1", type="number", required=True),
+        LabelSelect(*tool_options, label="Tool", name="tool"),
+        LabelSelect(*phase_options, label="Phase", name="phase")
+    )
+
+
+async def _save_improvement(form_data, slug=None):
+    """Save improvement (create new or update existing)"""
+    new_imp = Improvement(
+        title=form_data.get("title"),
+        what=form_data.get("what"),
+        why=form_data.get("why"),
+        prio=int(form_data.get("prio")),
+        tool=form_data.get("tool"),
+        phase=Phase(form_data.get("phase"))
+    )
+    
+    if slug:
+        db.t.improvements.update(new_imp.flatten_for_db())
+    else:
+        db.t.improvements.insert(new_imp.flatten_for_db())
+    
+    return new_imp
+
 top_nav = NavBar(
             Button("← Back to Index", hx_get="/", hx_target="body", hx_swap="innerHTML", cls=ButtonT.text),
+            Button("Improvements", hx_get="/all_tools_improvements", hx_target="#main-content", hx_swap="innerHTML", cls=ButtonT.text),
             Button("Theme Switcher", hx_get="/theme_switcher", hx_target="#main-content", hx_swap="innerHTML", cls=ButtonT.text),
             brand=H2("Information Flow Dashboard"),
         )
@@ -132,11 +171,11 @@ def tool_edit(slug: str):
                 ),
                 DivLAligned(
                     Button("Save Changes", type="submit", cls=ButtonT.primary),
-                    Button("Cancel", hx_get=f"/tool?slug={slug}", hx_target="body", hx_swap="innerHTML"),
+                    Button("Cancel", hx_get=f"/tool?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
                     cls="uk-margin-top"
                 ),
                 hx_post=f"/tool_save?slug={slug}",
-                hx_target="body",
+                hx_target="#main-content",
                 hx_swap="innerHTML"
             )
         ),
@@ -171,7 +210,7 @@ async def tool_save(slug: str, req):
         return Titled("Validation Error",
             Card(
                 P(f"Error validating form data: {str(e)}"),
-                Button("Back to Edit", hx_get=f"/tool_edit?slug={slug}", hx_target="body", hx_swap="innerHTML")
+                Button("Back to Edit", hx_get=f"/tool_edit?slug={slug}", hx_target="#main-content", hx_swap="innerHTML")
             )
         )
 @rt
@@ -251,11 +290,11 @@ def resource_edit(slug: str):
                 ),
                 DivLAligned(
                     Button("Save Changes", type="submit", cls=ButtonT.primary),
-                    Button("Cancel", hx_get=f"/resource?slug={slug}", hx_target="body", hx_swap="innerHTML"),
+                    Button("Cancel", hx_get=f"/resource?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
                     cls="uk-margin-top"
                 ),
                 hx_post=f"/resource_save?slug={slug}",
-                hx_target="body",
+                hx_target="#main-content",
                 hx_swap="innerHTML"
             )
         ),
@@ -303,7 +342,159 @@ async def resource_save(slug: str, req):
         return Titled("Validation Error",
             Card(
                 P(f"Error validating form data: {str(e)}"),
-                Button("Back to Edit", hx_get=f"/resource_edit?slug={slug}", hx_target="body", hx_swap="innerHTML")
+                Button("Back to Edit", hx_get=f"/resource_edit?slug={slug}", hx_target="#main-content", hx_swap="innerHTML")
+            )
+        )
+
+@rt
+def all_tools_improvements():
+    tools = db.t.tools()
+    improvements = db.t.improvements()
+    
+    imp_by_tool = {}
+    for imp in improvements:
+        tool_slug = imp['tool']
+        if tool_slug not in imp_by_tool: imp_by_tool[tool_slug] = []
+        imp_by_tool[tool_slug].append(imp)
+    
+    tool_cards = []
+    for tool in tools:
+        tool_slug = tool['slug']
+        tool_imps = sorted(imp_by_tool.get(tool_slug, []), key=lambda x: x['prio'])
+        
+        if tool_imps:
+            imp_table = Table(
+                    Thead(Tr(Th("Title"), Th("Priority", style="text-align:center"))),
+                    Tbody(*[Tr(Td(imp['title']), Td(str(imp['prio']), style="text-align:center"), style="cursor:pointer;", hx_get=f"/improvement?slug={imp['slug']}", hx_target="#main-content", hx_swap="innerHTML") for imp in tool_imps])
+            )
+        else:
+            imp_table = P("No improvements")
+        
+        tool_cards.append(
+            Card(
+                DivVStacked(
+                    H3(tool['name'], style="cursor:pointer; text-align:center;", hx_get=f"/tool?slug={tool_slug}", hx_target="#main-content", hx_swap="innerHTML"),
+                    imp_table,
+                    Button("+ Add Improvement", hx_get=f"/improvement_add?tool={tool_slug}", hx_target="#main-content", hx_swap="innerHTML", cls=ButtonT.primary, style="margin-top:10px;"),
+                    style="width:100%;"
+                )
+            )
+        )
+    
+    return Titled("Improvements for every tool",
+        Grid(*tool_cards, cols=3)
+    )
+
+@rt
+def improvement(slug: str):
+    imp_row = db.t.improvements[slug]
+    imp = Improvement(**imp_row)
+    
+    prio_color = "#0066cc" if imp.prio == 1 else "#666666"
+    
+    return Titled(f"Improvement: {imp.title}",
+        DivFullySpaced(
+            Button("← Back to Tools List", hx_get="/all_tools_improvements", hx_target="#main-content", hx_swap="innerHTML"),
+            Button("Edit", hx_get=f"/improvement_edit?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
+            cls="uk-margin-bottom"
+        ),
+        Card(
+            DivVStacked(
+                H2(imp.title, style="text-align:center; color:#0066cc;"),
+                H4(f"Tool: {imp.tool.title()}", style="text-align:center; cursor:pointer;", hx_get=f"/tool?slug={imp.tool}", hx_target="#main-content", hx_swap="innerHTML"),
+                Hr(),
+                DivVStacked(
+                    P(Strong("Priority: "), Span(str(imp.prio), style=f"background-color:{prio_color}; color:white; padding:4px 12px; border-radius:4px; font-weight:bold;")),
+                    P(Strong("Phase: "), imp.phase.value.title()),
+                    Hr(),
+                    H4("What needs to be improved"),
+                    P(imp.what),
+                    Hr(),
+                    H4("Why is this improvement needed"),
+                    P(imp.why),
+                    cls="space-y-3"
+                ),
+                style="width:100%;"
+            )
+        )
+    )
+
+@rt
+def improvement_add(tool: str):
+    return Titled("Add New Improvement",
+        DivFullySpaced(
+            Button("← Back to Tools List", hx_get="/all_tools_improvements", hx_target="#main-content", hx_swap="innerHTML"),
+            cls="uk-margin-bottom"
+        ),
+        Card(
+            H3("New Improvement Details"),
+            Form(
+                *_improvement_form_fields(tool=tool),
+                DivLAligned(
+                    Button("Create Improvement", type="submit", cls=ButtonT.primary),
+                    Button("Cancel", hx_get="/all_tools_improvements", hx_target="#main-content", hx_swap="innerHTML"),
+                    cls="uk-margin-top"
+                ),
+                hx_post="/improvement_create",
+                hx_target="#main-content",
+                hx_swap="innerHTML"
+            )
+        )
+    )
+
+@rt
+def improvement_edit(slug: str):
+    imp_row = db.t.improvements[slug]
+    imp = Improvement(**imp_row)
+    
+    return Titled(f"Edit Improvement: {imp.title}",
+        DivFullySpaced(
+            Button("← Back to Improvement", hx_get=f"/improvement?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
+            cls="uk-margin-bottom"
+        ),
+        Card(
+            H3("Edit Improvement Details"),
+            Form(
+                *_improvement_form_fields(imp=imp),
+                DivLAligned(
+                    Button("Save Changes", type="submit", cls=ButtonT.primary),
+                    Button("Cancel", hx_get=f"/improvement?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
+                    cls="uk-margin-top"
+                ),
+                hx_post=f"/improvement_save?slug={slug}",
+                hx_target="#main-content",
+                hx_swap="innerHTML"
+            )
+        )
+    )
+
+@rt
+async def improvement_create(req):
+    form_data = await req.form()
+    print(form_data)
+    try:
+        new_imp = await _save_improvement(form_data)
+        return RedirectResponse(url=f"/improvement?slug={new_imp.slug}", status_code=303)
+    except Exception as e:
+        return Titled("Validation Error",
+            Card(
+                P(f"Error creating improvement: {str(e)}"),
+                Button("Back", hx_get=f"/improvement_add?tool={form_data.get('tool')}", hx_target="#main-content", hx_swap="innerHTML")
+            )
+        )
+
+@rt
+async def improvement_save(slug: str, req):
+    form_data = await req.form()
+    print(form_data)
+    try:
+        updated_imp = await _save_improvement(form_data, slug=slug)
+        return RedirectResponse(url=f"/improvement?slug={updated_imp.slug}", status_code=303)
+    except Exception as e:
+        return Titled("Validation Error",
+            Card(
+                P(f"Error validating form data: {str(e)}"),
+                Button("Back to Edit", hx_get=f"/improvement_edit?slug={slug}", hx_target="#main-content", hx_swap="innerHTML")
             )
         )
 

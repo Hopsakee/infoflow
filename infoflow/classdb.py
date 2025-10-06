@@ -188,8 +188,8 @@ class Improvement(BaseModel):
     title: str = Field(..., description="Title of the improvement")
     what: str = Field(..., description="What needs to be improved")
     why: str = Field(..., description="Why is this improvement needed")
-    prio: int = Field(..., description="Priority of the improvement")
-    tool: str = Field(..., description="Tool that needs improvement")
+    prio: int = Field(..., description="Priority of the improvement. Lowest number is highest priority")
+    tool: str = Field(..., description="slug of the Tool that needs improvement")
     phase: Phase = Field(..., description="Phase that needs improvement")
 
     @computed_field
