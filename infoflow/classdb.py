@@ -236,7 +236,7 @@ def create_db(
 
 # %% ../nbs/00_classes_db.ipynb 34
 def create_tables_from_pydantic(
-    db: Database) -> Tuple[apswutils.db.Table, apswutils.db.Table, apswutils.db.Table]:
+    db: Database) -> Tuple[Table, Table, Table]:
     sample_tool = Tool(name="Sample", organization_system=[OrganizationSystem.TAGS], phase_quality=PhaseQualityData(collect=PhaseQuality.GREAT, retrieve=PhaseQuality.BAD, consume=PhaseQuality.OK, extract=PhaseQuality.NA, refine=PhaseQuality.GREAT))
     sample_item = InformationItem(name="Sample", info_type=InformationType.WEB_ARTICLE, method=PhaseMethodData(collect=Method.MANUAL, retrieve=None, consume=None, extract=None, refine=None), toolflow=PhaseToolflowData(collect="Reader", retrieve="Recall", consume=None, extract=None, refine=None))
     sample_imp = Improvement(title="Sample", what="Test", why="Test", prio=1, tool="sample", phase=Phase.COLLECT)
