@@ -68,8 +68,9 @@ def _improvement_form_fields(imp=None, tool=None):
 
 async def _save_improvement(form_data, slug=None):
     """Save improvement (create new or update existing)"""
+    imp_id = form_data.get("id")
     new_imp = Improvement(
-        id=form_data.get("id"),
+        id=int(imp_id) if imp_id else None,
         title=form_data.get("title"),
         what=form_data.get("what"),
         why=form_data.get("why"),
