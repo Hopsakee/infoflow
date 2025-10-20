@@ -104,14 +104,10 @@ def build_graphiz_from_intances(info_items, tools) -> graphviz.graphs.Digraph:
     return dot
 
 # %% ../nbs/02_create_vizualisation.ipynb 18
-def create_workflow_viz(items: None | InformationItem | dict[str, InformationItem] = None,
-                        tools: None | Tool | dict[str, Tool] =None,
+def create_workflow_viz(items: InformationItem | dict[str, InformationItem],
+                        tools: Tool | dict[str, Tool],
                         tool_filter: None | str = None) -> graphviz.graphs.Digraph:
     """Create workflow visualization with flexible filtering options."""
-    # Default to all items and tools if none specified
-    if items is None: items = InformationItem.get_instances()
-    if tools is None: tools = Tool.get_instances()
-    
     # Filter by tool if specified
     if tool_filter:
         items = get_info_items_for_tool(tool_filter, items)

@@ -1,3 +1,6 @@
+data/
+*.db*
+
 _docs/
 _proc/
 

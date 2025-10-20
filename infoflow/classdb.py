@@ -16,7 +16,7 @@ from hopsa import ossys
 # %% auto 0
 __all__ = ['InformationType', 'Method', 'Phase', 'PhaseQuality', 'OrganizationSystem', 'PhaseQualityData', 'Tool',
            'PhaseMethodData', 'PhaseToolflowData', 'InformationItem', 'Improvement', 'create_db',
-           'create_tables_from_pydantic']
+           'create_tables_from_pydantic', 'dict_from_db']
 
 # %% ../nbs/00_classes_db.ipynb 9
 class InformationType(Enum):
@@ -36,6 +36,7 @@ class InformationType(Enum):
 
 class Method(Enum):
     """How actions are performed - manually or automatically."""
+    NA = "na"
     MANUAL = "manual"
     AUTOMATIC = "automatic"
 
@@ -70,6 +71,7 @@ class PhaseQualityData(BaseModel):
     refine: PhaseQuality = Field(PhaseQuality.NA)
 
 class Tool(BaseModel):
+    id: int | None = Field(default=None, description="ID of the tool. This is automatically created when item is added to database.")
     name: str = Field(..., description="Name of the tool")
     organization_system: list[OrganizationSystem] = Field(..., description="Organization systems supported by the tool")
     phase_quality: PhaseQualityData = Field(..., description="Quality of the tool for each phase")
@@ -94,17 +96,37 @@ class Tool(BaseModel):
     def __init__(self, **data):
         super().__init__(**data)
         type(self)._instances[self.slug] = self
-    
+
     @classmethod
     def get_instances(cls) -> Dict[str, Tool]:
         return cls._instances
+
+    @classmethod
+    def get_db_schema(cls):
+        """Returns a dataclass with SQLite-compatible field types."""
+        @dataclass
+        class Tools: # Class name is used as table name automatically
+            id: int
+            name: str
+            collect: str
+            retrieve: str
+            consume: str
+            extract: str
+            refine: str
+            slug: str
+            organization_system: str
+            collect_quality: str
+            retrieve_quality: str
+            consume_quality: str
+            extract_quality: str
+            refine_quality: str
+        return Tools
     
-  
     @classmethod
     def from_db(cls, db_record):
         phase_quality = PhaseQualityData(collect=PhaseQuality(db_record['collect_quality']), retrieve=PhaseQuality(db_record['retrieve_quality']), consume=PhaseQuality(db_record['consume_quality']), extract=PhaseQuality(db_record['extract_quality']), refine=PhaseQuality(db_record['refine_quality']))
         org_systems = [OrganizationSystem(s) for s in json.loads(db_record['organization_system'])]
-        return cls(name=db_record['name'], organization_system=org_systems, phase_quality=phase_quality, collect=db_record['collect'], retrieve=db_record['retrieve'], consume=db_record['consume'], extract=db_record['extract'], refine=db_record['refine'])
+        return cls(id=db_record['id'], name=db_record['name'], organization_system=org_systems, phase_quality=phase_quality, collect=db_record['collect'], retrieve=db_record['retrieve'], consume=db_record['consume'], extract=db_record['extract'], refine=db_record['refine'])
 
 # %% ../nbs/00_classes_db.ipynb 16
 class PhaseMethodData(BaseModel):
@@ -135,6 +157,7 @@ class PhaseToolflowData(BaseModel):
 
 # %% ../nbs/00_classes_db.ipynb 21
 class InformationItem(BaseModel):
+    id: int | None = Field(default=None, description="ID of the information item. Automatically created when added to the database.")
     name: str = Field(..., description="Name of the information item")
     info_type: InformationType = Field(..., description="Type of information item, e.g. book, article, video, etc.")
     method: PhaseMethodData = Field(..., description="Methods used at each phase")
@@ -160,18 +183,59 @@ class InformationItem(BaseModel):
     def get_instances(cls) -> Dict[str, InformationItem]:
         return cls._instances
     
+    @classmethod
+    def get_db_schema(cls):
+        """Returns a dataclass with SQLite-compatible field types."""
+        @dataclass
+        class InformationItems: # Class name is used as table name automatically
+            id: int
+            name: str
+            info_type: str
+            slug: str
+            collect_method: str
+            retrieve_method: str
+            consume_method: str
+            extract_method: str
+            refine_method: str
+            collect_toolflow: str
+            retrieve_toolflow: str
+            consume_toolflow: str
+            extract_toolflow: str
+            refine_toolflow: str
+        return InformationItems
+
     @field_serializer('info_type')
     def db_serialize(self, v):
         return v.value
 
+    @staticmethod
+    def _parse_toolflow(v):
+        """function to parse toolflow. Need to handle none, string and list"""
+        if v is None: return None
+        if isinstance(v, str) and v.startswith('['): return json.loads(v)
+        return v
+        
+    @classmethod
+    def from_db(cls, db_record):
+        # We need `json.loads` here because the toolflows are stored as JSON strings in the database to allow for lists
+        toolflow = PhaseToolflowData(collect=cls._parse_toolflow(db_record['collect_toolflow']),
+                                    retrieve=cls._parse_toolflow(db_record['retrieve_toolflow']),
+                                    consume=cls._parse_toolflow(db_record['consume_toolflow']),
+                                    extract=cls._parse_toolflow(db_record['extract_toolflow']),
+                                    refine=cls._parse_toolflow(db_record['refine_toolflow']))
+        method = PhaseMethodData(collect=db_record['collect_method'], retrieve=db_record['retrieve_method'], consume=db_record['consume_method'], extract=db_record['extract_method'], refine=db_record['refine_method'])
+        info_type = InformationType(db_record['info_type'])
+        return cls(id=db_record['id'], name=db_record['name'], info_type=info_type, method=method, toolflow=toolflow)
 
 # %% ../nbs/00_classes_db.ipynb 22
 class Improvement(BaseModel):
+    id: int | None = Field(default=None, description="ID of the improvement, is automatically created when inserted in db.")
     title: str = Field(..., description="Title of the improvement")
     what: str = Field(..., description="What needs to be improved")
     why: str = Field(..., description="Why is this improvement needed")
-    prio: int = Field(..., description="Priority of the improvement")
-    tool: str = Field(..., description="Tool that needs improvement")
+    how: str = Field(..., description="Some ideas how to build this improvement")
+    prio: int = Field(..., description="Priority of the improvement. Lowest number is highest priority")
+    tool: str = Field(..., description="slug of the Tool that needs improvement")
     phase: Phase = Field(..., description="Phase that needs improvement")
 
     @computed_field
@@ -192,6 +256,22 @@ class Improvement(BaseModel):
     def get_instances(cls) -> Dict[str, Improvement]:
         return cls._instances
     
+    @classmethod
+    def get_db_schema(cls):
+        """Returns a dataclass with SQLite-compatible field types."""
+        @dataclass
+        class Improvements: # Class name is used as table name automatically
+            id: int
+            title: str
+            what: str
+            why: str
+            how: str
+            prio: int
+            tool: str
+            phase: str
+            slug: str
+        return Improvements
+
     @field_serializer('phase')
     def db_serialize(self, v):
         return v.value
@@ -201,26 +281,36 @@ class Improvement(BaseModel):
         valid_tools = Tool.get_instances().keys()
         if v not in valid_tools: raise ValueError(f"Tool '{v}' does not exist")
         return v
+    
+    @classmethod
+    def from_db(cls, db_record):
+        phase = Phase(db_record['phase'])
+        return cls(id=db_record['id'], title=db_record['title'], what=db_record['what'], why=db_record['why'], prio=db_record['prio'], tool=db_record['tool'], phase=phase)
+
 
 # %% ../nbs/00_classes_db.ipynb 31
-def create_db(loc="static/infoflow.db"):
+def create_db(
+    loc: str = "../data/infoflow.db" # Location of the SQLite database
+) -> Database:
     db = database(loc)
     db.execute("PRAGMA foreign_keys = ON;")
     return db
 
-
 # %% ../nbs/00_classes_db.ipynb 34
-def create_tables_from_pydantic(db):
-    sample_tool = Tool(name="Sample", organization_system=[OrganizationSystem.TAGS], phase_quality=PhaseQualityData(collect=PhaseQuality.GREAT, retrieve=PhaseQuality.BAD, consume=PhaseQuality.OK, extract=PhaseQuality.NA, refine=PhaseQuality.GREAT))
-    sample_item = InformationItem(name="Sample", info_type=InformationType.WEB_ARTICLE, method=PhaseMethodData(collect=Method.MANUAL, retrieve=None, consume=None, extract=None, refine=None), toolflow=PhaseToolflowData(collect="Reader", retrieve="Recall", consume=None, extract=None, refine=None))
-    sample_imp = Improvement(title="Sample", what="Test", why="Test", prio=1, tool="sample", phase=Phase.COLLECT)
-    
-    db["tools"].insert(sample_tool.flatten_for_db(), pk="slug")
-    db["information_items"].insert(sample_item.flatten_for_db(), pk="slug") 
-    db["improvements"].insert(sample_imp.flatten_for_db(), pk="slug")
-    
-    db["tools"].delete("sample")
-    db["information_items"].delete("sample")
-    db["improvements"].delete("sample")
-    
-    return db.t.tools, db.t.information_items, db.t.improvements
+def create_tables_from_pydantic(
+    db: Database,
+    classes: List[BaseModel]) -> Tuple[Table, Table, Table]:
+
+    for c in classes:
+        db.create(c.get_db_schema())
+
+# %% ../nbs/00_classes_db.ipynb 60
+def dict_from_db(
+        db_table: Table,
+        class_table: BaseModel
+    ) -> dict[str, BaseModel]:
+    """Converts a database table to a dictionary of pydantic models."""
+    d = {}
+    for t in db_table():
+        d[t["slug"]] = class_table.from_db(t)
+    return d
