@@ -7,6 +7,6 @@ If a choice is available, always choose the preferred package over the alternati
 - pathlib
 - pandas
 - geopandas
-- fasthtml
+- FastHTML for web development
 - numpy
-- fastcore
+- fastcore for convenience functions and writing tests
