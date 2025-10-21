@@ -240,7 +240,7 @@ def resource(slug: str):
             Card(
                 DivFullySpaced(
                     H3("Information Item Details"),
-                    Button("Edit", hx_get=f"/resource_edit?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
+                    Button("Edit", hx_get=f"/resource_edit?slug={item.slug}", hx_target="#main-content", hx_swap="innerHTML"),
                 ),
                 DivVStacked(
                     P(Strong("Name: "), item.name),
@@ -280,7 +280,7 @@ def resource_edit(slug: str):
     
     return Titled(f"Edit Information Item: {item.name}",
         DivFullySpaced(
-            Button("← Back to Item", hx_get=f"/resource?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
+            Button("← Back to Item", hx_get=f"/resource?slug={item.slug}", hx_target="#main-content", hx_swap="innerHTML"),
             cls="uk-margin-bottom"
         ),
         Card(
@@ -303,7 +303,7 @@ def resource_edit(slug: str):
                 DivFullySpaced(
                     DivLAligned(
                         Button("Save Changes", type="submit", cls=ButtonT.primary),
-                        Button("Cancel", hx_get=f"/resource?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
+                        Button("Cancel", hx_get=f"/resource?slug={item.slug}", hx_target="#main-content", hx_swap="innerHTML"),
                         cls="uk-margin-top"
                     ),
                     DivRAligned(
@@ -311,7 +311,7 @@ def resource_edit(slug: str):
                         cls="uk-margin-top"
                     )
                 ),
-                hx_post=f"/resource_save?slug={slug}",
+                hx_post=f"/resource_save?slug={item.slug}",
                 hx_target="#main-content",
                 hx_swap="innerHTML"
             )

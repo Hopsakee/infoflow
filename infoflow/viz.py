@@ -73,20 +73,20 @@ def build_graphiz_from_intances(info_items, tools) -> graphviz.graphs.Digraph:
     # Create source nodes for each InformationItem type (label with item.name, id by info_type)
     with dot.subgraph() as s:
         s.attr(rank='same')
-        for info_item in info_items:
-            it = getattr(info_item, 'info_type', None)
-            val = it.value if hasattr(it, 'value') else str(it)
-            source_id = f"source_{val}"
-            s.node(source_id, getattr(info_item, 'name', (val or '').replace('_', ' ').title()), shape='box')
+        for source in info_items:
+            source_name = getattr(source, 'name', None)
+            source_slug = getattr(source, 'slug', None)
+            source_id = f"source_{source_slug}"
+            s.node(source_id, source_name, shape='box')
 
     # Connect edges along the flow
-    for info_item in info_items:
-        it = getattr(info_item, 'info_type', None)
-        val = it.value if hasattr(it, 'value') else str(it)
-        source_id = f"source_{val}"
+    for source in info_items:
+        source_name = getattr(source, 'name', None)
+        source_slug = getattr(source, 'slug', None)
+        source_id = f"source_{source_slug}"
         prev_nodes = [source_id]
         for phase in phases:
-            tool_entry = getattr(getattr(info_item, 'toolflow', None), phase, None)
+            tool_entry = getattr(getattr(source, 'toolflow', None), phase, None)
             if tool_entry is None: continue
             curr_nodes = []
             tools_in_phase = tool_entry if isinstance(tool_entry, (list, tuple)) else (tool_entry,)

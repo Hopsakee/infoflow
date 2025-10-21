@@ -58,7 +58,7 @@ def add_onclick_to_nodes(svg_str: str):
     # Add onclick to each Tool-node's <g> element
     for n, d in nodes.items():
         node_id = d['id']
-        if d['fill'] != 'none': # Skipp all info-items
+        if d['fill'] != 'none': # Skip all info-items
             tool_phase = n.split('_')
             tool = ossys.sanitize_name(tool_phase[0])
             phase = ossys.sanitize_name(tool_phase[1])
