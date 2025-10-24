@@ -11,6 +11,8 @@ trigger: always_on
 - Write tests using the `fastcore.test` module from `fastcore`.
 - If there are several good solutions or implemenations, explain why you chose the implemented option over the other options.
 - When possible use Fastcore to make Python code more concise, readable, and expressive.
+- Use `FastHTML` for webdevelopment as documented in `./aicontext/fasthtml.md`
+- Use `MonsterUI` for creating the appearance of the web-application as documented in `./aicontext/monsterui.md`.
 
 ## `nbdev` Development Workflow
 
@@ -49,8 +51,19 @@ Use this list as a **"red flag" checklist** while coding—when you spot one of 
 **MANDATORY PROCESS**: Before writing ANY FastHTML code that can have more than one obvious implementation, you MUST:
 
 1. Read [./aicontext/fasthtml.md](cci:7://file:///home/jelle/code/infoflow/aicontext/fasthtml.md:0:0-0:0) 
-2. Identify which documentation webpage is relevant to the task
-3. Read that specific webpage using the appropriate tool
+2. Identify which documentation webpages are relevant to the task
+3. Read those specific webpages using the appropriate tool
 4. Only then write the FastHTML code based on that documentation
+
+This is a PROCESS RULE, not a context rule. It applies every single time a task has more than one obvious sollution. You may only skip this PROCESS RULE for simple tasks when you already know the best answer.
+
+## MonsterUI Development Workflow
+
+**MANDATORY PROCESS**: Before writing ANY MonsterUI code or code to create or alter the appearance of a web-application you MUST follow the next steps if the task can have more than one obvious code implementation:
+
+1. Read `./aicontext/monsterui.md` file 
+2. Identify which documentation webpages are relevant to the task
+3. Read those specific webpages using the appropriate tool
+4. Only then write the MonsterUI code based on that documentation
 
 This is a PROCESS RULE, not a context rule. It applies every single time a task has more than one obvious sollution. You may only skip this PROCESS RULE for simple tasks when you already know the best answer.
