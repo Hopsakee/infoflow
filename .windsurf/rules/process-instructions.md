@@ -14,6 +14,10 @@ trigger: always_on
 - Use `FastHTML` for webdevelopment as documented in `./aicontext/fasthtml.md`
 - Use `MonsterUI` for creating the appearance of the web-application as documented in `./aicontext/monsterui.md`.
 
+## git commit workflow
+
+If `nbdev` is used in the codebase whenever making a git commit, assume nbdev’s hooks will run. If `git commit` fails because the hooks modified notebooks (e.g., `nbdev_clean` rewrote metadata), immediately re-run `git status`, re-stage the changed files, and repeat the commit. Do not bypass or disable the hooks; they ensure notebooks stay clean and merge-friendly.
+
 ## `nbdev` Development Workflow
 
 **MANDATORY PROCESS**: Before writing ANY code, make sure you will write all code in the Jupyter Notebooks in the "./nbs" folder and that you will use the `nbdev` coding approach. Never write changes directly to the `*.py` files in the "./infoflow" folder. Only code that belongs in `main.py` can be written directly to the `main.py` file. Code that belongs in `main.py` is code that defines the `@route` for the FastHTML web application.

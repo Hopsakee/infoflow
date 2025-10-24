@@ -17,6 +17,10 @@ Here are some of nbdev's features:
 - [Tutorial](https://nbdev.fast.ai/tutorials/tutorial.html.md)
 - [Best practices](https://nbdev.fast.ai/tutorials/best_practices.html.md)
 
+## How to Git commit with nbdev
+
+Whenever making a git commit, assume nbdev’s hooks will run. If `git commit` fails because the hooks modified notebooks (e.g., `nbdev_clean` rewrote metadata), immediately re-run `git status`, re-stage the changed files, and repeat the commit. Do not bypass or disable the hooks; they ensure notebooks stay clean and merge-friendly.
+
 ## API
 
 - [API List](https://nbdev.fast.ai/apilist.txt): A succint list of all functions and methods in nbdev.
