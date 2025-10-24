@@ -29,6 +29,8 @@ app, rt = fast_app(
     ],
 )
 
+def H4_cp(*c, **kwargs): return H4(*c, **kwargs, cls="text-primary")
+
 def WorkflowViz(
         items: InformationItem | dict[str, InformationItem] = None,
         tools: Tool | dict[str, Tool] = None,
@@ -140,7 +142,7 @@ def tool(slug: str):
                     *[P(Strong(f"{phase.title()}: "), getattr(tool.phase_quality, phase).value.title()) for phase in ["collect", "retrieve", "consume", "extract", "refine"]],
                     Hr(),
                     H4("Phase Descriptions"),
-                    *[Div(Strong(f"{phase.title()}: "), P(getattr(tool, phase) or "Not specified")) for phase in ["collect", "retrieve", "consume", "extract", "refine"] if getattr(tool, phase)],
+                    *[Div(Strong(f"{phase.title()}: "), render_md(getattr(tool, phase) or "Not specified")) for phase in ["collect", "retrieve", "consume", "extract", "refine"] if getattr(tool, phase)],
                     cls="space-y-2", style="align-items:flex-start;"
                 ),
             ),
@@ -439,15 +441,15 @@ def improvement(id: int=None):
                     P(Strong("Priority: "), Span(str(imp.prio), style=f"background-color:{prio_color}; color:white; padding:4px 12px; border-radius:4px; font-weight:bold;")),
                     P(Strong("Phase: "), imp.phase.value.title()),
                     Hr(),
-                    H4("What needs to be improved"),
-                    P(imp.what),
+                    H4_cp("What needs to be improved"),
+                    render_md(imp.what),
                     Hr(),
-                    H4("Why is this improvement needed"),
-                    P(imp.why),
+                    H4_cp("Why is this improvement needed"),
+                    render_md(imp.why),
                     Hr(),
-                    H4("How to build this improvement"),
-                    P(imp.how),
-                    I(f"id: {imp.id}"),
+                    H4_cp("How to build this improvement"),
+                    P(render_md(imp.how), cls="TextT.right"),
+                    I(f"id: {imp.id}", cls="TextT.right"),
                     cls="space-y-3"
                 ),
                 style="width:100%;"
