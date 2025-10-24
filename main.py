@@ -384,7 +384,7 @@ def all_tools_improvements():
         if tool_imps:
             imp_table = Table(
                     Thead(Tr(Th("Title"), Th("Priority", style="text-align:center"))),
-                    Tbody(*[Tr(Td(imp['title']), Td(str(imp['prio']), style="text-align:center"), style="cursor:pointer;", hx_get=f"/improvement?slug={imp['slug']}", hx_target="#main-content", hx_swap="innerHTML") for imp in tool_imps])
+                    Tbody(*[Tr(Td(imp['title']), Td(str(imp['prio']), style="text-align:center"), style="cursor:pointer;", hx_get=f"/improvement?id={imp['id']}", hx_target="#main-content", hx_swap="innerHTML") for imp in tool_imps])
             )
         else:
             imp_table = P("No improvements")
@@ -405,9 +405,10 @@ def all_tools_improvements():
     )
 
 @rt
-def improvement(slug: str):
-    imp_row = db.t.improvements("slug=?", (slug,))[0]
+def improvement(id: int=None):
+    imp_row = db.t.improvements("id=?", (id,))[0]
     imp = Improvement(**imp_row)
+    slug = imp.slug
     
     prio_color = "#0066cc" if imp.prio == 1 else "#666666"
     
