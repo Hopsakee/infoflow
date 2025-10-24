@@ -46,6 +46,15 @@ def format_toolflow(toolflow_val):
     if isinstance(toolflow_val, (list, tuple)): return ", ".join(toolflow_val)
     return toolflow_val
 
+def ensure_unique_slug(table, slug, current_id=None):
+    matches = table("slug=?", (slug,))
+    if not matches: return
+    # Check if the we are updating an existing item, else raise a ValueError
+    cid = int(current_id) if current_id is not None else None
+    for row in matches:
+        if cid is None or int(row["id"]) != cid:
+            raise ValueError("An item with this name already exists. Please choose a different name.")
+
 def _improvement_form_fields(imp=None, tool=None):
     """Build form fields for improvement (create or edit)"""
     all_tools = db.t.tools()
@@ -66,7 +75,7 @@ def _improvement_form_fields(imp=None, tool=None):
     )
 
 
-async def _save_improvement(form_data, slug=None):
+async def _improvement_save(form_data, slug=None):
     """Save improvement (create new or update existing)"""
     imp_id = form_data.get("id")
     new_imp = Improvement(
@@ -79,6 +88,7 @@ async def _save_improvement(form_data, slug=None):
         tool=form_data.get("tool"),
         phase=Phase(form_data.get("phase"))
     )
+    ensure_unique_slug(db.t.improvements, new_imp.slug, new_imp.id)
     
     if slug:
         db.t.improvements.update(new_imp.flatten_for_db())
@@ -215,6 +225,7 @@ async def tool_save(slug: str, req):
             **{phase: form_data.get(phase) or None for phase in ["collect", "retrieve", "consume", "extract", "refine"]}
         )
 
+        ensure_unique_slug(db.t.tools, updated_tool.slug, updated_tool.id)
         db.t.tools.update(updated_tool.flatten_for_db())
         return RedirectResponse(url=f"/tool?slug={updated_tool.slug}", status_code=303)
         
@@ -353,7 +364,8 @@ async def resource_save(slug: str, req):
             method=method,
             toolflow=toolflow
         )
-        
+
+        ensure_unique_slug(db.t.information_items, updated_item.slug, updated_item.id)
         db.t.information_items.update(updated_item.flatten_for_db())
         return RedirectResponse(url=f"/resource?slug={updated_item.slug}", status_code=303)
         
@@ -497,7 +509,7 @@ async def improvement_create(req):
     form_data = await req.form()
     print(form_data)
     try:
-        new_imp = await _save_improvement(form_data)
+        new_imp = await _improvement_save(form_data)
         return RedirectResponse(url=f"/improvement?slug={new_imp.slug}", status_code=303)
     except Exception as e:
         return Titled("Validation Error",
@@ -507,12 +519,12 @@ async def improvement_create(req):
             )
         )
 
-@rt
+@rt("/improvement_save")
 async def improvement_save(slug: str, req):
     form_data = await req.form()
     print(form_data)
     try:
-        updated_imp = await _save_improvement(form_data, slug=slug)
+        updated_imp = await _improvement_save(form_data, slug=slug)
         return RedirectResponse(url=f"/improvement?slug={updated_imp.slug}", status_code=303)
     except Exception as e:
         return Titled("Validation Error",
