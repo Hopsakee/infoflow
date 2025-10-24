@@ -4,9 +4,10 @@ trigger: always_on
 
 - Use `uv` for package management and environment management.
 - Work in small steps. Only adjust one feature or solve one bug at a time.
-- Always use a branch when building a feature or solving an issue.
-- Use the `answer.ai` coding style.
-- Use the `nbdev` coding approach, so use Jupyter Notebooks and do not use the python files.
+- Always create a new branch when building a new feature or when asked to solve one of the issues that is defined in the repo on Github, Gitlab or Azure Devops.
+- Always ask to create a new branch if the given task will probably need a rewrite of more than 40 lines of code or addition of more than 20 lines of code.
+- Use the `fast.ai` coding style as explained in `code-style-guide.md`.
+- Use the `nbdev` coding approach, so use Jupyter Notebooks and do not use the python files and do not directly alter the python files.
 - Write tests using the `fastcore.test` module from `fastcore`.
 - If there are several good solutions or implemenations, explain why you chose the implemented option over the other options.
 - When possible use Fastcore to make Python code more concise, readable, and expressive.
@@ -14,11 +15,11 @@ trigger: always_on
 ## `nbdev` Development Workflow
 
 **MANDATORY PROCESS**: Before writing ANY code, make sure you will write all code in the Jupyter Notebooks in the "./nbs" folder and that you will use the `nbdev` coding approach. Never write changes directly to the `*.py` files in the "./infoflow" folder. Only code that belongs in `main.py` can be written directly to the `main.py` file. Code that belongs in `main.py` is code that defines the `@route` for the FastHTML web application.
-I you're not sure how you should create nbdev-style code, you MUST read the nbdev documentation that you can read using the MCP-server named "nbdev-docs". 
+I you're not sure how you should create nbdev-style code, you MUST read the nbdev documentation that you can read using the file `./aicontext/nbdev.md`. This file gives a high level overview of how to use `nbdev`. It has information on which URLs give more detailed information. Read that detailed information by following the link given if it contains information applicable to your current task. 
 
-1. Read the nbdev documentation using the nbdev-docs MCP server 
-2. Identify which part of the nbdev repo is relevant to the task
-3. Read that specific parts of the nbdev repo using the nbdev-docs MCP server
+1. Read the nbdev documentation using the file `./aicontext/nbdev.md` 
+2. Identify which parts of this file are relevant to the task
+3. Read those pecific parts of the nbdev following the links given in the file
 4. Only then write the new code or alter existing code based on that documentation
 
 
@@ -34,6 +35,13 @@ Check if FastCore can help us write more concise, readable and expressive code i
 - You’re manually parsing arguments or writing XML.
 
 Use this list as a **"red flag" checklist** while coding—when you spot one of these patterns, consider if FastCore has a tool to simplify it! 🚀
+
+### How to check FastCore
+
+1. Read the FastCore documentation using the file `./aicontext/fastcore.md` 
+2. Identify which parts of this file are relevant to the task
+3. Read those pecific parts of the nbdev following the links given in the file
+4. Only then write the new code or alter existing code based on that documentation
 
 
 ## FastHTML Development Workflow
