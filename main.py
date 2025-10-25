@@ -77,6 +77,28 @@ def _improvement_form_fields(imp=None, tool=None):
     )
 
 
+def _resource_form_fields(item: InformationItem | None = None):
+    info_type_options = []
+    info_type_val = item.info_type.value if item else None
+    if item is None: info_type_options.append(Option("Select type", value="", selected=True))
+    info_type_options += [Option(it.value.replace("_", " ").title(), value=it.value, selected=(info_type_val==it.value)) for it in InformationType]
+    phase_method_selects = []
+    phases = ["collect", "retrieve", "consume", "extract", "refine"]
+    for phase in phases:
+        method_val = getattr(item.method, phase) if item else None
+        options = [Option("Not specified", value="", selected=method_val is None)]
+        options += [Option(m.value.title(), value=m.value, selected=(method_val and m.value==method_val.value)) for m in Method]
+        phase_method_selects.append(LabelSelect(*options, label=f"{phase.title()}", name=f"{phase}_method", cls="min-w-40"))
+    def toolflow_value(phase):
+        if not item: return ""
+        val = getattr(item.toolflow, phase)
+        if val is None: return ""
+        if isinstance(val, (list, tuple)): return ", ".join(val)
+        return val
+    toolflow_inputs = [LabelInput(f"{phase.title()}", name=f"{phase}_toolflow", value=toolflow_value(phase), placeholder=f"Tool(s) for {phase} phase (comma-separated for multiple)", cls="w-full") for phase in phases]
+    return info_type_options, phase_method_selects, toolflow_inputs
+
+
 async def _improvement_save(form_data, slug=None):
     """Save improvement (create new or update existing)"""
     imp_id = form_data.get("id")
@@ -102,6 +124,7 @@ async def _improvement_save(form_data, slug=None):
 top_nav = NavBar(
             Button("← Back to Index", hx_get="/", hx_target="body", hx_swap="innerHTML", cls=ButtonT.text),
             Button("Improvements", hx_get="/all_tools_improvements", hx_target="#main-content", hx_swap="innerHTML", cls=ButtonT.text),
+            Button("+ Add Information Item", hx_get="/resource_add", hx_target="#main-content", hx_swap="innerHTML", cls=ButtonT.secondary),
             Button("Theme Switcher", hx_get="/theme_switcher", hx_target="#main-content", hx_swap="innerHTML", cls=ButtonT.text),
             brand=H2("Information Flow Dashboard"),
         )
@@ -277,19 +300,7 @@ def resource_edit(slug: str):
     item_row = db.t.information_items("slug=?", (slug,))[0]
     item = InformationItem.from_db(item_row)
     
-    info_type_options = [Option(it.value.replace("_", " ").title(), value=it.value, selected=(it.value==item.info_type.value)) for it in InformationType]
-    
-    phase_method_selects = []
-    for phase in ["collect", "retrieve", "consume", "extract", "refine"]:
-        method_val = getattr(item.method, phase)
-        options_val = [Option(m.value.title(), value=m.value, selected=(method_val and m.value==method_val.value)) for m in Method]
-        phase_method_selects.append(LabelSelect(*options_val, label=f"{phase.title()}", name=f"{phase}_method", cls="min-w-40"))
-    
-    def toolflow_value(phase):
-        val = getattr(item.toolflow, phase)
-        if val is None: return ""
-        if isinstance(val, (list, tuple)): return ", ".join(val)
-        return val
+    info_type_options, phase_method_selects, toolflow_inputs = _resource_form_fields(item)
     
     return Titled(f"Edit Information Item: {item.name}",
         DivFullySpaced(
@@ -309,10 +320,7 @@ def resource_edit(slug: str):
                 DivHStacked(*phase_method_selects, cls="uk-margin-small"),
                 Hr(),
                 H4("Phase Toolflow"),
-                DivVStacked(
-                    *[LabelInput(f"{phase.title()}", name=f"{phase}_toolflow", value=toolflow_value(phase), placeholder=f"Tool(s) for {phase} phase (comma-separated for multiple)", cls="w-full") for phase in ["collect", "retrieve", "consume", "extract", "refine"]],
-                    cls="uk-margin-small"
-                ),
+                DivVStacked(*toolflow_inputs, cls="uk-margin-small"),
                 DivFullySpaced(
                     DivLAligned(
                         Button("Save Changes", type="submit", cls=ButtonT.primary),
@@ -337,13 +345,13 @@ async def resource_save(slug: str, req):
     form_data = await req.form()
     
     try:
-        info_type = InformationType(form_data.get("info_type"))
+        info_type_val = form_data.get("info_type")
+        if not info_type_val: raise ValueError("Please choose an information type.")
+        info_type = InformationType(info_type_val)
         
         phase_method_data = {}
         for phase in ["collect", "retrieve", "consume", "extract", "refine"]:
             method_val = form_data.get(f"{phase}_method")
-            print(form_data)
-            print(method_val)
             if method_val: phase_method_data[phase] = Method(method_val)
             else: phase_method_data[phase] = None
         
@@ -376,6 +384,81 @@ async def resource_save(slug: str, req):
             Card(
                 P(f"Error validating form data: {str(e)}"),
                 Button("Back to Edit", hx_get=f"/resource_edit?slug={slug}", hx_target="#main-content", hx_swap="innerHTML")
+            )
+        )
+
+
+@rt("/resource_add")
+def resource_add():
+    info_type_options, phase_method_selects, toolflow_inputs = _resource_form_fields()
+    return Titled("Add Information Item",
+        DivFullySpaced(
+            Button("← Back to Index", hx_get="/", hx_target="body", hx_swap="innerHTML"),
+            cls="uk-margin-bottom"
+        ),
+        Card(
+            H3("New Information Item Details"),
+            Form(
+                H4("Name"),
+                LabelInput("", name="name", value="", required=True),
+                Hr(),
+                H4("Information Type"),
+                LabelSelect(*info_type_options, label="Type", name="info_type", cls="min-w-40", required=True),
+                Hr(),
+                H4("Phase Methods"),
+                DivHStacked(*phase_method_selects, cls="uk-margin-small"),
+                Hr(),
+                H4("Phase Toolflow"),
+                DivVStacked(*toolflow_inputs, cls="uk-margin-small"),
+                DivLAligned(
+                    Button("Create Information Item", type="submit", cls=ButtonT.primary),
+                    Button("Cancel", hx_get="/", hx_target="body", hx_swap="innerHTML"),
+                    cls="uk-margin-top"
+                ),
+                hx_post="/resource_create",
+                hx_target="#main-content",
+                hx_swap="innerHTML"
+            )
+        ),
+        id="main-content"
+    )
+
+
+@rt("/resource_create")
+async def resource_create(req):
+    form_data = await req.form()
+    try:
+        info_type_val = form_data.get("info_type")
+        if not info_type_val: raise ValueError("Please choose an information type.")
+        info_type = InformationType(info_type_val)
+        phase_method_data = {}
+        for phase in ["collect", "retrieve", "consume", "extract", "refine"]:
+            method_val = form_data.get(f"{phase}_method")
+            if method_val: phase_method_data[phase] = Method(method_val)
+            else: phase_method_data[phase] = None
+        method = PhaseMethodData(**phase_method_data)
+        phase_toolflow_data = {}
+        for phase in ["collect", "retrieve", "consume", "extract", "refine"]:
+            toolflow_val = form_data.get(f"{phase}_toolflow")
+            if toolflow_val and toolflow_val.strip():
+                if "," in toolflow_val: phase_toolflow_data[phase] = tuple([t.strip() for t in toolflow_val.split(",") if t.strip()])
+                else: phase_toolflow_data[phase] = toolflow_val.strip()
+            else: phase_toolflow_data[phase] = None
+        toolflow = PhaseToolflowData(**phase_toolflow_data)
+        new_item = InformationItem(
+            name=form_data.get("name"),
+            info_type=info_type,
+            method=method,
+            toolflow=toolflow
+        )
+        ensure_unique_slug(db.t.information_items, new_item.slug)
+        db.t.information_items.insert(new_item.flatten_for_db())
+        return RedirectResponse(url=f"/resource?slug={new_item.slug}", status_code=303)
+    except Exception as e:
+        return Titled("Validation Error",
+            Card(
+                P(f"Error creating information item: {str(e)}"),
+                Button("Back", hx_get="/resource_add", hx_target="#main-content", hx_swap="innerHTML")
             )
         )
 

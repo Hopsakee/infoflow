@@ -63,7 +63,7 @@ def add_onclick_to_nodes(svg_str: str):
             tool = ossys.sanitize_name(tool_phase[0])
             phase = ossys.sanitize_name(tool_phase[1])
             onclick_attr = f'onclick="htmx.ajax(\'GET\', \'/tool?slug={tool}\', {{target: \'#main-content\', swap: \'outerHTML\'}})"'
-        if d['fill'] == 'none': # Get all info-items
+        if d['fill'] == 'white': # Get all info-items
             name_split = n.split('_')
             resource = n.split('_')[1:] # remove the "source" part of the name
             resource = '_'.join(resource)
