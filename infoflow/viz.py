@@ -43,7 +43,10 @@ def build_graphiz_from_intances(info_items, tools) -> graphviz.graphs.Digraph:
     elif not isinstance(info_items, list): info_items = [info_items]
     if isinstance(tools, dict): tools = list(tools.values())
 
-    dot = graphviz.Digraph(comment='PKM Workflow')
+    dot = graphviz.Digraph(
+        comment='PKM Workflow',
+        graph_attr={'bgcolor': 'transparent', 'format':'svg'},
+        edge_attr={'color': 'lightblue', 'fontcolor': 'lightblue'})
     dot.attr(rankdir='TB')
 
     phases = ['collect', 'retrieve', 'consume', 'extract', 'refine']
@@ -77,7 +80,7 @@ def build_graphiz_from_intances(info_items, tools) -> graphviz.graphs.Digraph:
             source_name = getattr(source, 'name', None)
             source_slug = getattr(source, 'slug', None)
             source_id = f"source_{source_slug}"
-            s.node(source_id, source_name, shape='box')
+            s.node(source_id, source_name, shape='box', fillcolor='white', style='filled')
 
     # Connect edges along the flow
     for source in info_items:
