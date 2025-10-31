@@ -73,6 +73,7 @@ class PhaseQualityData(BaseModel):
 class Tool(BaseModel):
     id: int | None = Field(default=None, description="ID of the tool. This is automatically created when item is added to database.")
     name: str = Field(..., description="Name of the tool")
+    description: str | None = Field(default=None, description="General intent/goal of the tool")
     organization_system: list[OrganizationSystem] = Field(..., description="Organization systems supported by the tool")
     phase_quality: PhaseQualityData = Field(..., description="Quality of the tool for each phase")
     collect: str | None = Field(default=None, description="Description how to use tool in collect phase")
@@ -108,6 +109,7 @@ class Tool(BaseModel):
         class Tools: # Class name is used as table name automatically
             id: int
             name: str
+            description: str
             collect: str
             retrieve: str
             consume: str
@@ -126,7 +128,7 @@ class Tool(BaseModel):
     def from_db(cls, db_record):
         phase_quality = PhaseQualityData(collect=PhaseQuality(db_record['collect_quality']), retrieve=PhaseQuality(db_record['retrieve_quality']), consume=PhaseQuality(db_record['consume_quality']), extract=PhaseQuality(db_record['extract_quality']), refine=PhaseQuality(db_record['refine_quality']))
         org_systems = [OrganizationSystem(s) for s in json.loads(db_record['organization_system'])]
-        return cls(id=db_record['id'], name=db_record['name'], organization_system=org_systems, phase_quality=phase_quality, collect=db_record['collect'], retrieve=db_record['retrieve'], consume=db_record['consume'], extract=db_record['extract'], refine=db_record['refine'])
+        return cls(id=db_record['id'], name=db_record['name'], description=db_record.get('description'), organization_system=org_systems, phase_quality=phase_quality, collect=db_record['collect'], retrieve=db_record['retrieve'], consume=db_record['consume'], extract=db_record['extract'], refine=db_record['refine'])
 
 # %% ../nbs/00_classes_db.ipynb 16
 class PhaseMethodData(BaseModel):

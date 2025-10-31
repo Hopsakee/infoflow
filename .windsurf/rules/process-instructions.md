@@ -16,17 +16,29 @@ trigger: always_on
 
 ## git commit workflow
 
-If `nbdev` is used in the codebase whenever making a git commit, assume nbdev’s hooks will run. If `git commit` fails because the hooks modified notebooks (e.g., `nbdev_clean` rewrote metadata), immediately re-run `git status`, re-stage the changed files, and repeat the commit. Do not bypass or disable the hooks; they ensure notebooks stay clean and merge-friendly.
+If `nbdev` is used in the codebase make commits using the following steps:
+
+1. `uv run nbdev_prepare`: This makes sure that the following `nbdev` command are run: `nbdev_export`, `nbdev_test`, `nbdev_clean` and `nbdev_readme`. All these are needed before we can do a commit.
+2. Stage the changes.
+3. Commit the changes with a proper commit message. DO NOT clean the notebooks yourself. Whenever making a git commit, assume nbdev’s hooks will run. The nbdev's hooks will clean the notebooks. If `git commit` fails because the hooks modified notebooks (e.g., `nbdev_clean` rewrote metadata), immediately re-run `git status`, re-stage the changed files, and repeat the commit. Do not bypass or disable the hooks; they ensure notebooks stay clean and merge-friendly.
 
 ## `nbdev` Development Workflow
 
-**MANDATORY PROCESS**: Before writing ANY code, make sure you will write all code in the Jupyter Notebooks in the "./nbs" folder and that you will use the `nbdev` coding approach. Never write changes directly to the `*.py` files in the "./infoflow" folder. Only code that belongs in `main.py` can be written directly to the `main.py` file. Code that belongs in `main.py` is code that defines the `@route` for the FastHTML web application.
+**MANDATORY PROCESS**: Before writing ANY code, make sure you will write all code in the Jupyter Notebooks in the "./nbs" folder and that you will use the `nbdev` coding approach. Use your `edit_notebook` tool to edit `.ipynb` files.
+Never write changes directly to the `*.py` files in the "./infoflow" folder. Only code that belongs in `main.py` can be written directly to the `main.py` file. Code that belongs in `main.py` is code that defines the `@route` for the FastHTML web application.
 I you're not sure how you should create nbdev-style code, you MUST read the nbdev documentation that you can read using the file `./aicontext/nbdev.md`. This file gives a high level overview of how to use `nbdev`. It has information on which URLs give more detailed information. Read that detailed information by following the link given if it contains information applicable to your current task. 
 
 1. Read the nbdev documentation using the file `./aicontext/nbdev.md` 
 2. Identify which parts of this file are relevant to the task
 3. Read those pecific parts of the nbdev following the links given in the file
 4. Only then write the new code or alter existing code based on that documentation
+
+Use the following `nbdev` commands from the terminal if needed:
+
+- To build the .py modules from Jupyter notebooks: `uv run nbdev_export`
+- To run the tests in the notebooks: `uv run nbdev_test`
+- To nbdev_clean: Cleans your notebooks to get rid of extreanous output for git
+nbdev_readme: Updates your repo’s README.md file from your index notebook.
 
 
 ## FastCore Development Workflow

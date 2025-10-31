@@ -14,4 +14,3 @@ trigger: always_on
 - Mocking data is only needed for writing tests, never mock data for the actual application
 - Use type hints for all code
 - Use docmenst for all code as used in `nbdev`. So add a comment right after the parameter to describe the parameter
-- 
