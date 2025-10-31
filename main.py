@@ -161,10 +161,13 @@ def tool(slug: str):
                     P(Strong("Name: "), tool.name),
                     P(Strong("Organization System: "), ", ".join([org.value for org in tool.organization_system])),
                     Hr(),
-                    H4("Phase Quality"),
+                    H4_cp("Description"),
+                    render_md(tool.description or "Not specified"),
+                    Hr(),
+                    H4_cp("Phase Quality"),
                     *[P(Strong(f"{phase.title()}: "), getattr(tool.phase_quality, phase).value.title()) for phase in ["collect", "retrieve", "consume", "extract", "refine"]],
                     Hr(),
-                    H4("Phase Descriptions"),
+                    H4_cp("Phase Descriptions"),
                     *[Div(Strong(f"{phase.title()}: "), render_md(getattr(tool, phase) or "Not specified")) for phase in ["collect", "retrieve", "consume", "extract", "refine"] if getattr(tool, phase)],
                     cls="space-y-2", style="align-items:flex-start;"
                 ),
@@ -192,19 +195,22 @@ def tool_edit(slug: str):
         Card(
             H3("Edit Tool Details"),
             Form(
-                H4("Name"),
+                H4_cp("Name"),
                 LabelInput("", name="name", value=tool.name, required=True),
                 Hr(),
-                H4("Organization System"),
+                H4_cp("Description"),
+                LabelTextArea("", name="description", value=tool.description or "", placeholder="General intent/goal of this tool", cls="w-full"),
+                Hr(),
+                H4_cp("Organization System"),
                 DivHStacked(
                     *[LabelCheckboxX(org.value.replace("_", " ").title(), name="organization_system", value=org.value, checked=org in tool.organization_system) for org in OrganizationSystem],
                     cls="space-x-4"
                 ),
                 Hr(),
-                H4("Phase Quality"),
+                H4_cp("Phase Quality"),
                 DivHStacked(*phase_selects, cls="uk-margin-small"),
                 Hr(),
-                H4("Phase Descriptions"),
+                H4_cp("Phase Descriptions"),
                 DivVStacked(
                     *[LabelTextArea(f"{phase.title()}", name=phase, value=getattr(tool, phase) or "", placeholder=f"Description for {phase} phase", cls="w-full") for phase in ["collect", "retrieve", "consume", "extract", "refine"]],
                     cls="uk-margin-small"
@@ -245,6 +251,7 @@ async def tool_save(slug: str, req):
         updated_tool = Tool(
             id=form_data.get("id"),
             name=form_data.get("name"),
+            description=form_data.get("description") or None,
             organization_system=org_systems,
             phase_quality=phase_quality,
             **{phase: form_data.get(phase) or None for phase in ["collect", "retrieve", "consume", "extract", "refine"]}
