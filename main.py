@@ -19,6 +19,7 @@ from infoflow.viz import *
 from infoflow.webapp import *
 
 db = create_db("data/infoflow.db")
+create_tables_from_pydantic(db, [InformationItem, Tool, Improvement])
 
 [Tool.from_db(t) for t in db.t.tools()]
 

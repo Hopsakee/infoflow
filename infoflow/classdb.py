@@ -304,7 +304,7 @@ def create_tables_from_pydantic(
     classes: List[BaseModel]) -> Tuple[Table, Table, Table]:
 
     for c in classes:
-        db.create(c.get_db_schema())
+        db.create(c.get_db_schema(), transform=True)
 
 # %% ../nbs/00_classes_db.ipynb 60
 def dict_from_db(
