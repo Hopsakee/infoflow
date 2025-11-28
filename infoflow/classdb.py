@@ -14,7 +14,7 @@ from fastcore.test import *
 from hopsa import ossys
 
 # %% auto 0
-__all__ = ['InformationType', 'Method', 'Phase', 'PhaseQuality', 'OrganizationSystem', 'PhaseQualityData', 'Tool',
+__all__ = ['InformationType', 'Method', 'Phase', 'PhaseQuality', 'OrganizationSystem', 'SluggedModel', 'PhaseQualityData', 'Tool',
            'PhaseMethodData', 'PhaseToolflowData', 'InformationItem', 'Improvement', 'create_db',
            'create_tables_from_pydantic', 'dict_from_db']
 
@@ -62,7 +62,18 @@ class OrganizationSystem(Enum):
     LINKS = "links"
     JOHNNY_DECIMAL = "johnny_decimal"
 
-# %% ../nbs/00_classes_db.ipynb 15
+# %% ../nbs/00_classes_db.ipynb 12
+class SluggedModel(BaseModel):
+    @computed_field
+    @property
+    def slug(self) -> str:
+        return ossys.sanitize_name(self.name)
+
+    @staticmethod
+    def _fld(rec, name):
+        return getattr(rec, name) if hasattr(rec, name) else rec[name]
+
+# %% ../nbs/00_classes_db.ipynb 18
 class PhaseQualityData(BaseModel):
     collect: PhaseQuality = Field(PhaseQuality.NA)
     retrieve: PhaseQuality = Field(PhaseQuality.NA)
@@ -70,7 +81,12 @@ class PhaseQualityData(BaseModel):
     extract: PhaseQuality = Field(PhaseQuality.NA)
     refine: PhaseQuality = Field(PhaseQuality.NA)
 
-class Tool(BaseModel):
+
+# %% ../nbs/00_classes_db.ipynb 19
+class Tool(SluggedModel):
+    """Pydantic dataclass for tools. This Pydantic dataclass has several methods for converting to and from a 
+    SQLite database. This is needed because SQLite doesn't support all used data types.
+    !IMPORTANT: be sure to add or change the appropriate methods when adding or changing fields!"""
     id: int | None = Field(default=None, description="ID of the tool. This is automatically created when item is added to database.")
     name: str = Field(..., description="Name of the tool")
     description: str | None = Field(default=None, description="General intent/goal of the tool")
@@ -82,25 +98,27 @@ class Tool(BaseModel):
     extract: str | None = Field(default=None, description="Description how to use tool in extract phase")
     refine: str | None = Field(default=None, description="Description how to use tool in refine phase")
 
-    @computed_field
-    @property
-    def slug(self) -> str:
-        return ossys.sanitize_name(self.name)
-
-    def flatten_for_db(self):
-        base = self.model_dump(exclude={'phase_quality', 'organization_system'})
-        base.update({'organization_system': json.dumps([org.value for org in self.organization_system]), 'collect_quality': self.phase_quality.collect.value, 'retrieve_quality': self.phase_quality.retrieve.value, 'consume_quality': self.phase_quality.consume.value, 'extract_quality': self.phase_quality.extract.value, 'refine_quality': self.phase_quality.refine.value})
-        return base
-
-    _instances: ClassVar[Dict[str, Tool]] = {}
-
     def __init__(self, **data):
         super().__init__(**data)
         type(self)._instances[self.slug] = self
 
+    _instances: ClassVar[Dict[str, "Tool"]] = {}
+
     @classmethod
-    def get_instances(cls) -> Dict[str, Tool]:
+    def get_instances(cls) -> Dict[str, "Tool"]:
         return cls._instances
+
+    def flatten_for_db(self):
+        base = self.model_dump(exclude={'phase_quality', 'organization_system'})
+        base.update(
+            {'organization_system': json.dumps([org.value for org in self.organization_system]), 
+            'collect_quality': self.phase_quality.collect.value, 
+            'retrieve_quality': self.phase_quality.retrieve.value, 
+            'consume_quality': self.phase_quality.consume.value, 
+            'extract_quality': self.phase_quality.extract.value, 
+            'refine_quality': self.phase_quality.refine.value}
+            )
+        return base
 
     @classmethod
     def get_db_schema(cls):
@@ -126,11 +144,16 @@ class Tool(BaseModel):
     
     @classmethod
     def from_db(cls, db_record):
-        phase_quality = PhaseQualityData(collect=PhaseQuality(db_record['collect_quality']), retrieve=PhaseQuality(db_record['retrieve_quality']), consume=PhaseQuality(db_record['consume_quality']), extract=PhaseQuality(db_record['extract_quality']), refine=PhaseQuality(db_record['refine_quality']))
-        org_systems = [OrganizationSystem(s) for s in json.loads(db_record['organization_system'])]
-        return cls(id=db_record['id'], name=db_record['name'], description=db_record.get('description'), organization_system=org_systems, phase_quality=phase_quality, collect=db_record['collect'], retrieve=db_record['retrieve'], consume=db_record['consume'], extract=db_record['extract'], refine=db_record['refine'])
+        phase_quality = PhaseQualityData(
+            collect=PhaseQuality(cls._fld(db_record, 'collect_quality')),
+            retrieve=PhaseQuality(cls._fld(db_record, 'retrieve_quality')),
+            consume=PhaseQuality(cls._fld(db_record, 'consume_quality')),
+            extract=PhaseQuality(cls._fld(db_record, 'extract_quality')),
+            refine=PhaseQuality(cls._fld(db_record, 'refine_quality')))
+        org_systems = [OrganizationSystem(s) for s in json.loads(cls._fld(db_record, 'organization_system'))]
+        return cls(id=cls._fld(db_record, 'id'), name=cls._fld(db_record, 'name'), description=cls._fld(db_record, 'description'), organization_system=org_systems, phase_quality=phase_quality, collect=cls._fld(db_record, 'collect'), retrieve=cls._fld(db_record, 'retrieve'), consume=cls._fld(db_record, 'consume'), extract=cls._fld(db_record, 'extract'), refine=cls._fld(db_record, 'refine'))
 
-# %% ../nbs/00_classes_db.ipynb 16
+# %% ../nbs/00_classes_db.ipynb 20
 class PhaseMethodData(BaseModel):
     collect: Method | None = Field(default=None)
     retrieve: Method | None = Field(default=None)
@@ -138,7 +161,7 @@ class PhaseMethodData(BaseModel):
     extract: Method | None = Field(default=None)
     refine: Method | None = Field(default=None)
 
-# %% ../nbs/00_classes_db.ipynb 18
+# %% ../nbs/00_classes_db.ipynb 22
 class PhaseToolflowData(BaseModel):
     collect: Union[str, tuple[str, ...], None] = Field(default=None)
     retrieve: Union[str, tuple[str, ...], None] = Field(default=None)
@@ -157,30 +180,43 @@ class PhaseToolflowData(BaseModel):
     def _val(cls, v): return cls._san(v)
 
 
-# %% ../nbs/00_classes_db.ipynb 21
-class InformationItem(BaseModel):
+# %% ../nbs/00_classes_db.ipynb 25
+class InformationItem(SluggedModel):
+    """Pydantic dataclass for information items. This Pydantic dataclass has several methods for converting to and from a 
+    SQLite database. This is needed because SQLite doesn't support all used data types.
+    !IMPORTANT: be sure to add or change the appropriate methods when adding or changing fields!"""
     id: int | None = Field(default=None, description="ID of the information item. Automatically created when added to the database.")
     name: str = Field(..., description="Name of the information item")
     info_type: InformationType = Field(..., description="Type of information item, e.g. book, article, video, etc.")
     method: PhaseMethodData = Field(..., description="Methods used at each phase")
     toolflow: PhaseToolflowData = Field(..., description="Tools used for this item at each phase")
 
-    @computed_field
-    @property
-    def slug(self) -> str:
-        return ossys.sanitize_name(self.name)
-
-    def flatten_for_db(self):
-        base = self.model_dump(exclude={'method', 'toolflow'})
-        base.update({'collect_method': self.method.collect.value if self.method.collect else None, 'retrieve_method': self.method.retrieve.value if self.method.retrieve else None, 'consume_method': self.method.consume.value if self.method.consume else None, 'extract_method': self.method.extract.value if self.method.extract else None, 'refine_method': self.method.refine.value if self.method.refine else None, 'collect_toolflow': json.dumps(self.toolflow.collect) if isinstance(self.toolflow.collect, (list, tuple)) else self.toolflow.collect, 'retrieve_toolflow': json.dumps(self.toolflow.retrieve) if isinstance(self.toolflow.retrieve, (list, tuple)) else self.toolflow.retrieve, 'consume_toolflow': json.dumps(self.toolflow.consume) if isinstance(self.toolflow.consume, (list, tuple)) else self.toolflow.consume, 'extract_toolflow': json.dumps(self.toolflow.extract) if isinstance(self.toolflow.extract, (list, tuple)) else self.toolflow.extract, 'refine_toolflow': json.dumps(self.toolflow.refine) if isinstance(self.toolflow.refine, (list, tuple)) else self.toolflow.refine})
-        return base
-
-    _instances: ClassVar[Dict[str, InformationItem]] = {}
-
     def __init__(self, **data):
         super().__init__(**data)
         type(self)._instances[self.slug] = self
-    
+
+    @classmethod
+    def get_instances(cls) -> Dict[str, "InformationItem"]:
+        return cls._instances
+
+    _instances: ClassVar[Dict[str, "InformationItem"]] = {}
+
+    def flatten_for_db(self):
+        base = self.model_dump(exclude={'method', 'toolflow'})
+        base.update(
+            {'collect_method': self.method.collect.value if self.method.collect else None, 
+            'retrieve_method': self.method.retrieve.value if self.method.retrieve else None, 
+            'consume_method': self.method.consume.value if self.method.consume else None, 
+            'extract_method': self.method.extract.value if self.method.extract else None, 
+            'refine_method': self.method.refine.value if self.method.refine else None,
+            'collect_toolflow': json.dumps(self.toolflow.collect) if isinstance(self.toolflow.collect, (list, tuple)) else self.toolflow.collect,
+            'retrieve_toolflow': json.dumps(self.toolflow.retrieve) if isinstance(self.toolflow.retrieve, (list, tuple)) else self.toolflow.retrieve,
+            'consume_toolflow': json.dumps(self.toolflow.consume) if isinstance(self.toolflow.consume, (list, tuple)) else self.toolflow.consume,
+            'extract_toolflow': json.dumps(self.toolflow.extract) if isinstance(self.toolflow.extract, (list, tuple)) else self.toolflow.extract,
+            'refine_toolflow': json.dumps(self.toolflow.refine) if isinstance(self.toolflow.refine, (list, tuple)) else self.toolflow.refine}
+            )
+        return base
+
     @classmethod
     def get_instances(cls) -> Dict[str, InformationItem]:
         return cls._instances
@@ -220,19 +256,23 @@ class InformationItem(BaseModel):
     @classmethod
     def from_db(cls, db_record):
         # We need `json.loads` here because the toolflows are stored as JSON strings in the database to allow for lists
-        toolflow = PhaseToolflowData(collect=cls._parse_toolflow(db_record['collect_toolflow']),
-                                    retrieve=cls._parse_toolflow(db_record['retrieve_toolflow']),
-                                    consume=cls._parse_toolflow(db_record['consume_toolflow']),
-                                    extract=cls._parse_toolflow(db_record['extract_toolflow']),
-                                    refine=cls._parse_toolflow(db_record['refine_toolflow']))
-        method = PhaseMethodData(collect=db_record['collect_method'], retrieve=db_record['retrieve_method'], consume=db_record['consume_method'], extract=db_record['extract_method'], refine=db_record['refine_method'])
-        info_type = InformationType(db_record['info_type'])
-        return cls(id=db_record['id'], name=db_record['name'], info_type=info_type, method=method, toolflow=toolflow)
+        toolflow = PhaseToolflowData(
+            collect=cls._parse_toolflow(cls._fld(db_record, 'collect_toolflow')),
+            retrieve=cls._parse_toolflow(cls._fld(db_record, 'retrieve_toolflow')),
+            consume=cls._parse_toolflow(cls._fld(db_record, 'consume_toolflow')),
+            extract=cls._parse_toolflow(cls._fld(db_record, 'extract_toolflow')),
+            refine=cls._parse_toolflow(cls._fld(db_record, 'refine_toolflow')))
+        method = PhaseMethodData(collect=cls._fld(db_record, 'collect_method'), retrieve=cls._fld(db_record, 'retrieve_method'), consume=cls._fld(db_record, 'consume_method'), extract=cls._fld(db_record, 'extract_method'), refine=cls._fld(db_record, 'refine_method'))
+        info_type = InformationType(cls._fld(db_record, 'info_type'))
+        return cls(id=cls._fld(db_record, 'id'), name=cls._fld(db_record, 'name'), info_type=info_type, method=method, toolflow=toolflow)
 
-# %% ../nbs/00_classes_db.ipynb 22
-class Improvement(BaseModel):
+# %% ../nbs/00_classes_db.ipynb 26
+class Improvement(SluggedModel):
+    """Pydantic dataclass for improvements. This Pydantic dataclass has several methods for converting to and from a 
+    SQLite database. This is needed because SQLite doesn't support all used data types.
+    !IMPORTANT: be sure to add or change the appropriate methods when adding or changing fields!"""
     id: int | None = Field(default=None, description="ID of the improvement, is automatically created when inserted in db.")
-    title: str = Field(..., description="Title of the improvement")
+    name: str = Field(..., description="Title of the improvement")
     what: str = Field(..., description="What needs to be improved")
     why: str = Field(..., description="Why is this improvement needed")
     how: str = Field(..., description="Some ideas how to build this improvement")
@@ -240,31 +280,26 @@ class Improvement(BaseModel):
     tool: str = Field(..., description="slug of the Tool that needs improvement")
     phase: Phase = Field(..., description="Phase that needs improvement")
 
-    @computed_field
-    @property
-    def slug(self) -> str:
-        return ossys.sanitize_name(self.title)
+    def __init__(self, **data):
+        super().__init__(**data)
+        type(self)._instances[self.slug] = self
+
+    @classmethod
+    def get_instances(cls) -> Dict[str, "Improvement"]:
+        return cls._instances
+
+    _instances: ClassVar[Dict[str, "Improvement"]] = {}
 
     def flatten_for_db(self):
         return self.model_dump()
 
-    _instances: ClassVar[Dict[str, Improvement]] = {}
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        type(self)._instances[self.slug] = self
-    
-    @classmethod
-    def get_instances(cls) -> Dict[str, Improvement]:
-        return cls._instances
-    
     @classmethod
     def get_db_schema(cls):
         """Returns a dataclass with SQLite-compatible field types."""
         @dataclass
         class Improvements: # Class name is used as table name automatically
             id: int
-            title: str
+            name: str
             what: str
             why: str
             how: str
@@ -287,10 +322,10 @@ class Improvement(BaseModel):
     @classmethod
     def from_db(cls, db_record):
         phase = Phase(db_record['phase'])
-        return cls(id=db_record['id'], title=db_record['title'], what=db_record['what'], why=db_record['why'], prio=db_record['prio'], tool=db_record['tool'], phase=phase)
+        return cls(id=db_record['id'], name=db_record['name'], what=db_record['what'], why=db_record['why'], prio=db_record['prio'], tool=db_record['tool'], phase=phase)
 
 
-# %% ../nbs/00_classes_db.ipynb 31
+# %% ../nbs/00_classes_db.ipynb 35
 def create_db(
     loc: str = "../data/infoflow.db" # Location of the SQLite database
 ) -> Database:
@@ -298,7 +333,7 @@ def create_db(
     db.execute("PRAGMA foreign_keys = ON;")
     return db
 
-# %% ../nbs/00_classes_db.ipynb 34
+# %% ../nbs/00_classes_db.ipynb 38
 def create_tables_from_pydantic(
     db: Database,
     classes: List[BaseModel]) -> Tuple[Table, Table, Table]:
@@ -306,7 +341,7 @@ def create_tables_from_pydantic(
     for c in classes:
         db.create(c.get_db_schema(), transform=True)
 
-# %% ../nbs/00_classes_db.ipynb 60
+# %% ../nbs/00_classes_db.ipynb 81
 def dict_from_db(
         db_table: Table,
         class_table: BaseModel
@@ -314,5 +349,6 @@ def dict_from_db(
     """Converts a database table to a dictionary of pydantic models."""
     d = {}
     for t in db_table():
-        d[t["slug"]] = class_table.from_db(t)
+        slug = getattr(t, "slug") if hasattr(t, "slug") else t["slug"]
+        d[slug] = class_table.from_db(t)
     return d
