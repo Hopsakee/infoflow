@@ -478,19 +478,32 @@ def all_tools_improvements():
     
     imp_by_tool = {}
     for imp in improvements:
-        tool_slug = imp['tool']
+
+    # item_row = db.t.information_items("slug=?", (slug,))[0]
+        tool_slug = imp.tool
+        print(tool_slug)
         if tool_slug not in imp_by_tool: imp_by_tool[tool_slug] = []
         imp_by_tool[tool_slug].append(imp)
     
     tool_cards = []
     for tool in tools:
-        tool_slug = tool['slug']
-        tool_imps = sorted(imp_by_tool.get(tool_slug, []), key=lambda x: x['prio'])
+        tool_slug = tool.slug
+        tool_imps = sorted(imp_by_tool.get(tool_slug, []), key=lambda x: x.prio)
         
         if tool_imps:
             imp_table = Table(
                     Thead(Tr(Th("Title"), Th("Priority", style="text-align:center"))),
-                    Tbody(*[Tr(Td(imp['title']), Td(str(imp['prio']), style="text-align:center"), style="cursor:pointer;", hx_get=f"/improvement?id={imp['id']}", hx_target="#main-content", hx_swap="innerHTML") for imp in tool_imps])
+                    Tbody(*[
+                        Tr(
+                            Td(imp.name), 
+                            Td(str(imp.prio), style="text-align:center"), 
+                            style="cursor:pointer;", 
+                            hx_get=f"/improvement?id={imp.id}", 
+                            hx_target="#main-content", 
+                            hx_swap="innerHTML"
+                        ) 
+                        for imp in tool_imps
+                    ]),
             )
         else:
             imp_table = P("No improvements")
@@ -498,9 +511,13 @@ def all_tools_improvements():
         tool_cards.append(
             Card(
                 DivVStacked(
-                    H3(tool['name'], style="cursor:pointer; text-align:center;", hx_get=f"/tool?slug={tool_slug}", hx_target="#main-content", hx_swap="innerHTML"),
+                    H3(
+                        tool.name, style="cursor:pointer; text-align:center;", hx_get=f"/tool?slug={tool_slug}", hx_target="#main-content", hx_swap="innerHTML"
+                    ),
                     imp_table,
-                    Button("+ Add Improvement", hx_get=f"/improvement_add?tool={tool_slug}", hx_target="#main-content", hx_swap="innerHTML", cls=ButtonT.primary, style="margin-top:10px;"),
+                    Button(
+                        "+ Add Improvement", hx_get=f"/improvement_add?tool={tool_slug}", hx_target="#main-content", hx_swap="innerHTML", cls=ButtonT.primary, style="margin-top:10px;"
+                    ),
                     style="width:100%;"
                 )
             )
