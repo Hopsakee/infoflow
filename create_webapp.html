@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="This module creates the FastHTML webapplication and starts the server.">
+
+<title>Create the webapplication logic and visualisations – infoflow</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-000f0825b9c55ed21d14970d810c14a9.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="Create the webapplication logic and visualisations – infoflow">
+<meta property="og:description" content="This module creates the FastHTML webapplication and starts the server.">
+<meta property="og:site_name" content="infoflow">
+<meta name="twitter:title" content="Create the webapplication logic and visualisations – infoflow">
+<meta name="twitter:description" content="This module creates the FastHTML webapplication and starts the server.">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">infoflow</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./create_webapp.html">Create the webapplication logic and visualisations</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">infoflow</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./classes_db.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Define Classes and create the SQLite database</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./create_instances.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Create Instances</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./create_vizualisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Create graphiz visualisation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./create_webapp.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Create the webapplication logic and visualisations</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#stucture-of-the-web-application" id="toc-stucture-of-the-web-application" class="nav-link active" data-scroll-target="#stucture-of-the-web-application">Stucture of the web-application</a></li>
+  <li><a href="#background-information-on-building-the-clickable-information-flow-visualisation-in-a-fasthtml-web-application" id="toc-background-information-on-building-the-clickable-information-flow-visualisation-in-a-fasthtml-web-application" class="nav-link" data-scroll-target="#background-information-on-building-the-clickable-information-flow-visualisation-in-a-fasthtml-web-application">Background information on building the clickable information flow visualisation in a FastHTML web-application</a></li>
+  <li><a href="#create-a-dictionary-from-all-the-nodes-in-the-graph" id="toc-create-a-dictionary-from-all-the-nodes-in-the-graph" class="nav-link" data-scroll-target="#create-a-dictionary-from-all-the-nodes-in-the-graph">Create a dictionary from all the nodes in the graph</a>
+  <ul class="collapse">
+  <li><a href="#dict_svgnodes" id="toc-dict_svgnodes" class="nav-link" data-scroll-target="#dict_svgnodes">dict_svgnodes</a></li>
+  </ul></li>
+  <li><a href="#create-clickable-nodes-in-the-svg-string" id="toc-create-clickable-nodes-in-the-svg-string" class="nav-link" data-scroll-target="#create-clickable-nodes-in-the-svg-string">Create clickable nodes in the <code>SVG</code> string</a>
+  <ul class="collapse">
+  <li><a href="#add_onclick_to_nodes" id="toc-add_onclick_to_nodes" class="nav-link" data-scroll-target="#add_onclick_to_nodes">add_onclick_to_nodes</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/Hopsakee/infoflow/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="create_webapp.html.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Create the webapplication logic and visualisations</h1>
+</div>
+
+<div>
+  <div class="description">
+    This module creates the <code>FastHTML</code> webapplication and starts the server.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<section id="stucture-of-the-web-application" class="level2">
+<h2 class="anchored" data-anchor-id="stucture-of-the-web-application">Stucture of the web-application</h2>
+<p>The web-application will show on the main page the information flow as created by the <code>create_combined_infoflow_viz</code> from the <code>infoflow.viz</code> module. This function returns a <code>graphviz.graphs.Digraph</code> object. We turn this object into a <code>SVG</code> string which we can then modify to create clickable nodes. To make this possible we need several steps:</p>
+<ol type="1">
+<li>Create the infoflow graph, see <a href="../02_create_vizualisation.ipynb">Create the vizualisation</a></li>
+<li>Convert the graph to an SVG string, see <a href="../02_create_vizualisation.ipynb">Create the vizualisation</a></li>
+<li>Create a dictionary from all the nodes in the graph</li>
+<li>Use that dictionary to alter the <code>SVG</code> string to create clickable nodes</li>
+<li>Create the main page from the web-application that shows the information flow as an <code>SVG</code> image.</li>
+<li>Create a function to make a webpage for every element in the infoflow.</li>
+</ol>
+<div class="{callout}">
+<p>Ad. 4.</p>
+<p>We could also create this dictionary from the instances we made from all the elements in our infoflow. The same instances that are use to create the graph in the first place. But I choose to create the dictionary from the <code>SVG</code>-string from the <code>Digraph</code> object, becaust then I will be able to use that function to create clickable <code>SVG</code> images from other sources as well.</p>
+</div>
+</section>
+<section id="background-information-on-building-the-clickable-information-flow-visualisation-in-a-fasthtml-web-application" class="level2">
+<h2 class="anchored" data-anchor-id="background-information-on-building-the-clickable-information-flow-visualisation-in-a-fasthtml-web-application">Background information on building the clickable information flow visualisation in a FastHTML web-application</h2>
+<section id="how-to-visualize-a-svg-string-in-a-webapp" class="level4">
+<h4 class="anchored" data-anchor-id="how-to-visualize-a-svg-string-in-a-webapp">How to visualize a <code>SVG</code> string in a webapp</h4>
+<p>Use <code>NotStr()</code> to prevent HTML escaping of the SVG string.</p>
+<div id="cell-5" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>svg_sample <span class="op">=</span> <span class="st">"""&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?&gt;</span><span class="ch">\n</span><span class="st">&lt;!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"</span><span class="ch">\n</span><span class="st"> "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- Generated by graphviz version 2.43.0 (0)</span><span class="ch">\n</span><span class="st"> --&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- Title: %3 Pages: 1 --&gt;</span><span class="ch">\n</span><span class="st">&lt;svg width="226pt" height="534pt"</span><span class="ch">\n</span><span class="st"> viewBox="0.00 0.00 225.61 534.27" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 530.27)"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;%3&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="transparent" stroke="transparent" points="-4,4 -4,-530.27 221.61,-530.27 221.61,4 -4,4"/&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- neoreader_collect --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="node1" class="node"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;neoreader_collect&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="lightblue" stroke="black" points="174.81,-423.24 143.44,-454.3 80.7,-454.3 49.33,-423.24 80.7,-392.19 143.44,-392.19 174.81,-423.24"/&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="112.07" y="-427.04" font-family="Times,serif" font-size="14.00"&gt;NeoReader&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="112.07" y="-412.04" font-family="Times,serif" font-size="14.00"&gt;(collect)&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- neoreader_retrieve --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="node2" class="node"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;neoreader_retrieve&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="orange" stroke="black" points="174.81,-325.19 143.44,-356.24 80.7,-356.24 49.33,-325.19 80.7,-294.13 143.44,-294.13 174.81,-325.19"/&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="112.07" y="-328.99" font-family="Times,serif" font-size="14.00"&gt;NeoReader&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="112.07" y="-313.99" font-family="Times,serif" font-size="14.00"&gt;(retrieve)&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- neoreader_collect&amp;#45;&amp;gt;neoreader_retrieve --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="edge2" class="edge"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;neoreader_collect&amp;#45;&amp;gt;neoreader_retrieve&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;path fill="none" stroke="black" d="M112.07,-392.11C112.07,-384.06 112.07,-375.21 112.07,-366.7"/&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="black" stroke="black" points="115.57,-366.54 112.07,-356.54 108.57,-366.54 115.57,-366.54"/&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- neoreader_consume --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="node3" class="node"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;neoreader_consume&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="lightgreen" stroke="black" points="174.81,-227.13 143.44,-258.19 80.7,-258.19 49.33,-227.13 80.7,-196.08 143.44,-196.08 174.81,-227.13"/&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="112.07" y="-230.93" font-family="Times,serif" font-size="14.00"&gt;NeoReader&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="112.07" y="-215.93" font-family="Times,serif" font-size="14.00"&gt;(consume)&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- neoreader_retrieve&amp;#45;&amp;gt;neoreader_consume --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="edge3" class="edge"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;neoreader_retrieve&amp;#45;&amp;gt;neoreader_consume&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;path fill="none" stroke="black" d="M112.07,-294.06C112.07,-286 112.07,-277.16 112.07,-268.64"/&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="black" stroke="black" points="115.57,-268.49 112.07,-258.49 108.57,-268.49 115.57,-268.49"/&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- readwise_extract --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="node4" class="node"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;readwise_extract&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="lightgreen" stroke="black" points="168.25,-129.08 140.16,-160.13 83.98,-160.13 55.9,-129.08 83.98,-98.03 140.16,-98.03 168.25,-129.08"/&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="112.07" y="-132.88" font-family="Times,serif" font-size="14.00"&gt;Readwise&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="112.07" y="-117.88" font-family="Times,serif" font-size="14.00"&gt;(extract)&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- neoreader_consume&amp;#45;&amp;gt;readwise_extract --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="edge4" class="edge"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;neoreader_consume&amp;#45;&amp;gt;readwise_extract&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;path fill="none" stroke="black" d="M112.07,-196.01C112.07,-187.95 112.07,-179.11 112.07,-170.59"/&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="black" stroke="black" points="115.57,-170.43 112.07,-160.43 108.57,-170.43 115.57,-170.43"/&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- obsidian_refine --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="node5" class="node"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;obsidian_refine&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="lightgreen" stroke="black" points="106.22,-31.03 79.64,-62.08 26.5,-62.08 -0.07,-31.03 26.5,0.03 79.64,0.03 106.22,-31.03"/&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="53.07" y="-34.83" font-family="Times,serif" font-size="14.00"&gt;Obsidian&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="53.07" y="-19.83" font-family="Times,serif" font-size="14.00"&gt;(refine)&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- readwise_extract&amp;#45;&amp;gt;obsidian_refine --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="edge5" class="edge"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;readwise_extract&amp;#45;&amp;gt;obsidian_refine&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;path fill="none" stroke="black" d="M93.57,-97.95C88.34,-89.45 82.59,-80.08 77.09,-71.13"/&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="black" stroke="black" points="79.93,-69.07 71.72,-62.38 73.97,-72.73 79.93,-69.07"/&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- recall_refine --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="node6" class="node"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;recall_refine&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="lightgreen" stroke="black" points="217.65,-31.03 194.36,-62.08 147.78,-62.08 124.49,-31.03 147.78,0.03 194.36,0.03 217.65,-31.03"/&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="171.07" y="-34.83" font-family="Times,serif" font-size="14.00"&gt;Recall&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="171.07" y="-19.83" font-family="Times,serif" font-size="14.00"&gt;(refine)&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- readwise_extract&amp;#45;&amp;gt;recall_refine --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="edge6" class="edge"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;readwise_extract&amp;#45;&amp;gt;recall_refine&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;path fill="none" stroke="black" d="M130.58,-97.95C135.8,-89.45 141.56,-80.08 147.05,-71.13"/&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="black" stroke="black" points="150.18,-72.73 152.43,-62.38 144.21,-69.07 150.18,-72.73"/&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- source_document --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="node7" class="node"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;source_document&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="none" stroke="black" points="149.07,-526.27 75.07,-526.27 75.07,-490.27 149.07,-490.27 149.07,-526.27"/&gt;</span><span class="ch">\n</span><span class="st">&lt;text text-anchor="middle" x="112.07" y="-504.57" font-family="Times,serif" font-size="14.00"&gt;Document&lt;/text&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;!-- source_document&amp;#45;&amp;gt;neoreader_collect --&gt;</span><span class="ch">\n</span><span class="st">&lt;g id="edge1" class="edge"&gt;</span><span class="ch">\n</span><span class="st">&lt;title&gt;source_document&amp;#45;&amp;gt;neoreader_collect&lt;/title&gt;</span><span class="ch">\n</span><span class="st">&lt;path fill="none" stroke="black" d="M112.07,-490.07C112.07,-482.61 112.07,-473.54 112.07,-464.55"/&gt;</span><span class="ch">\n</span><span class="st">&lt;polygon fill="black" stroke="black" points="115.57,-464.52 112.07,-454.52 108.57,-464.52 115.57,-464.52"/&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;/g&gt;</span><span class="ch">\n</span><span class="st">&lt;/svg&gt;</span><span class="ch">\n</span><span class="st">"""</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(svg_sample)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?&gt;
+&lt;!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"&gt;
+&lt;!-- Generated by graphviz version 2.43.0 (0)
+ --&gt;
+&lt;!-- Title: %3 Pages: 1 --&gt;
+&lt;svg width="226pt" height="534pt"
+ viewBox="0.00 0.00 225.61 534.27" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"&gt;
+&lt;g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 530.27)"&gt;
+&lt;title&gt;%3&lt;/title&gt;
+&lt;polygon fill="transparent" stroke="transparent" points="-4,4 -4,-530.27 221.61,-530.27 221.61,4 -4,4"/&gt;
+&lt;!-- neoreader_collect --&gt;
+&lt;g id="node1" class="node"&gt;
+&lt;title&gt;neoreader_collect&lt;/title&gt;
+&lt;polygon fill="lightblue" stroke="black" points="174.81,-423.24 143.44,-454.3 80.7,-454.3 49.33,-423.24 80.7,-392.19 143.44,-392.19 174.81,-423.24"/&gt;
+&lt;text text-anchor="middle" x="112.07" y="-427.04" font-family="Times,serif" font-size="14.00"&gt;NeoReader&lt;/text&gt;
+&lt;text text-anchor="middle" x="112.07" y="-412.04" font-family="Times,serif" font-size="14.00"&gt;(collect)&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- neoreader_retrieve --&gt;
+&lt;g id="node2" class="node"&gt;
+&lt;title&gt;neoreader_retrieve&lt;/title&gt;
+&lt;polygon fill="orange" stroke="black" points="174.81,-325.19 143.44,-356.24 80.7,-356.24 49.33,-325.19 80.7,-294.13 143.44,-294.13 174.81,-325.19"/&gt;
+&lt;text text-anchor="middle" x="112.07" y="-328.99" font-family="Times,serif" font-size="14.00"&gt;NeoReader&lt;/text&gt;
+&lt;text text-anchor="middle" x="112.07" y="-313.99" font-family="Times,serif" font-size="14.00"&gt;(retrieve)&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- neoreader_collect&amp;#45;&amp;gt;neoreader_retrieve --&gt;
+&lt;g id="edge2" class="edge"&gt;
+&lt;title&gt;neoreader_collect&amp;#45;&amp;gt;neoreader_retrieve&lt;/title&gt;
+&lt;path fill="none" stroke="black" d="M112.07,-392.11C112.07,-384.06 112.07,-375.21 112.07,-366.7"/&gt;
+&lt;polygon fill="black" stroke="black" points="115.57,-366.54 112.07,-356.54 108.57,-366.54 115.57,-366.54"/&gt;
+&lt;/g&gt;
+&lt;!-- neoreader_consume --&gt;
+&lt;g id="node3" class="node"&gt;
+&lt;title&gt;neoreader_consume&lt;/title&gt;
+&lt;polygon fill="lightgreen" stroke="black" points="174.81,-227.13 143.44,-258.19 80.7,-258.19 49.33,-227.13 80.7,-196.08 143.44,-196.08 174.81,-227.13"/&gt;
+&lt;text text-anchor="middle" x="112.07" y="-230.93" font-family="Times,serif" font-size="14.00"&gt;NeoReader&lt;/text&gt;
+&lt;text text-anchor="middle" x="112.07" y="-215.93" font-family="Times,serif" font-size="14.00"&gt;(consume)&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- neoreader_retrieve&amp;#45;&amp;gt;neoreader_consume --&gt;
+&lt;g id="edge3" class="edge"&gt;
+&lt;title&gt;neoreader_retrieve&amp;#45;&amp;gt;neoreader_consume&lt;/title&gt;
+&lt;path fill="none" stroke="black" d="M112.07,-294.06C112.07,-286 112.07,-277.16 112.07,-268.64"/&gt;
+&lt;polygon fill="black" stroke="black" points="115.57,-268.49 112.07,-258.49 108.57,-268.49 115.57,-268.49"/&gt;
+&lt;/g&gt;
+&lt;!-- readwise_extract --&gt;
+&lt;g id="node4" class="node"&gt;
+&lt;title&gt;readwise_extract&lt;/title&gt;
+&lt;polygon fill="lightgreen" stroke="black" points="168.25,-129.08 140.16,-160.13 83.98,-160.13 55.9,-129.08 83.98,-98.03 140.16,-98.03 168.25,-129.08"/&gt;
+&lt;text text-anchor="middle" x="112.07" y="-132.88" font-family="Times,serif" font-size="14.00"&gt;Readwise&lt;/text&gt;
+&lt;text text-anchor="middle" x="112.07" y="-117.88" font-family="Times,serif" font-size="14.00"&gt;(extract)&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- neoreader_consume&amp;#45;&amp;gt;readwise_extract --&gt;
+&lt;g id="edge4" class="edge"&gt;
+&lt;title&gt;neoreader_consume&amp;#45;&amp;gt;readwise_extract&lt;/title&gt;
+&lt;path fill="none" stroke="black" d="M112.07,-196.01C112.07,-187.95 112.07,-179.11 112.07,-170.59"/&gt;
+&lt;polygon fill="black" stroke="black" points="115.57,-170.43 112.07,-160.43 108.57,-170.43 115.57,-170.43"/&gt;
+&lt;/g&gt;
+&lt;!-- obsidian_refine --&gt;
+&lt;g id="node5" class="node"&gt;
+&lt;title&gt;obsidian_refine&lt;/title&gt;
+&lt;polygon fill="lightgreen" stroke="black" points="106.22,-31.03 79.64,-62.08 26.5,-62.08 -0.07,-31.03 26.5,0.03 79.64,0.03 106.22,-31.03"/&gt;
+&lt;text text-anchor="middle" x="53.07" y="-34.83" font-family="Times,serif" font-size="14.00"&gt;Obsidian&lt;/text&gt;
+&lt;text text-anchor="middle" x="53.07" y="-19.83" font-family="Times,serif" font-size="14.00"&gt;(refine)&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- readwise_extract&amp;#45;&amp;gt;obsidian_refine --&gt;
+&lt;g id="edge5" class="edge"&gt;
+&lt;title&gt;readwise_extract&amp;#45;&amp;gt;obsidian_refine&lt;/title&gt;
+&lt;path fill="none" stroke="black" d="M93.57,-97.95C88.34,-89.45 82.59,-80.08 77.09,-71.13"/&gt;
+&lt;polygon fill="black" stroke="black" points="79.93,-69.07 71.72,-62.38 73.97,-72.73 79.93,-69.07"/&gt;
+&lt;/g&gt;
+&lt;!-- recall_refine --&gt;
+&lt;g id="node6" class="node"&gt;
+&lt;title&gt;recall_refine&lt;/title&gt;
+&lt;polygon fill="lightgreen" stroke="black" points="217.65,-31.03 194.36,-62.08 147.78,-62.08 124.49,-31.03 147.78,0.03 194.36,0.03 217.65,-31.03"/&gt;
+&lt;text text-anchor="middle" x="171.07" y="-34.83" font-family="Times,serif" font-size="14.00"&gt;Recall&lt;/text&gt;
+&lt;text text-anchor="middle" x="171.07" y="-19.83" font-family="Times,serif" font-size="14.00"&gt;(refine)&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- readwise_extract&amp;#45;&amp;gt;recall_refine --&gt;
+&lt;g id="edge6" class="edge"&gt;
+&lt;title&gt;readwise_extract&amp;#45;&amp;gt;recall_refine&lt;/title&gt;
+&lt;path fill="none" stroke="black" d="M130.58,-97.95C135.8,-89.45 141.56,-80.08 147.05,-71.13"/&gt;
+&lt;polygon fill="black" stroke="black" points="150.18,-72.73 152.43,-62.38 144.21,-69.07 150.18,-72.73"/&gt;
+&lt;/g&gt;
+&lt;!-- source_document --&gt;
+&lt;g id="node7" class="node"&gt;
+&lt;title&gt;source_document&lt;/title&gt;
+&lt;polygon fill="none" stroke="black" points="149.07,-526.27 75.07,-526.27 75.07,-490.27 149.07,-490.27 149.07,-526.27"/&gt;
+&lt;text text-anchor="middle" x="112.07" y="-504.57" font-family="Times,serif" font-size="14.00"&gt;Document&lt;/text&gt;
+&lt;/g&gt;
+&lt;!-- source_document&amp;#45;&amp;gt;neoreader_collect --&gt;
+&lt;g id="edge1" class="edge"&gt;
+&lt;title&gt;source_document&amp;#45;&amp;gt;neoreader_collect&lt;/title&gt;
+&lt;path fill="none" stroke="black" d="M112.07,-490.07C112.07,-482.61 112.07,-473.54 112.07,-464.55"/&gt;
+&lt;polygon fill="black" stroke="black" points="115.57,-464.52 112.07,-454.52 108.57,-464.52 115.57,-464.52"/&gt;
+&lt;/g&gt;
+&lt;/g&gt;
+&lt;/svg&gt;
+</code></pre>
+</div>
+</div>
+<div id="cell-7" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>show(Div(NotStr(svg_sample)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div><!--?xml version="1.0" encoding="UTF-8" standalone="no"?-->
+
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: %3 Pages: 1 -->
+<svg width="226pt" height="534pt" viewbox="0.00 0.00 225.61 534.27" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 530.27)">
+<title>%3</title>
+<polygon fill="transparent" stroke="transparent" points="-4,4 -4,-530.27 221.61,-530.27 221.61,4 -4,4"></polygon>
+<!-- neoreader_collect -->
+<g id="node1" class="node">
+<title>neoreader_collect</title>
+<polygon fill="lightblue" stroke="black" points="174.81,-423.24 143.44,-454.3 80.7,-454.3 49.33,-423.24 80.7,-392.19 143.44,-392.19 174.81,-423.24"></polygon>
+<text text-anchor="middle" x="112.07" y="-427.04" font-family="Times,serif" font-size="14.00">NeoReader</text>
+<text text-anchor="middle" x="112.07" y="-412.04" font-family="Times,serif" font-size="14.00">(collect)</text>
+</g>
+<!-- neoreader_retrieve -->
+<g id="node2" class="node">
+<title>neoreader_retrieve</title>
+<polygon fill="orange" stroke="black" points="174.81,-325.19 143.44,-356.24 80.7,-356.24 49.33,-325.19 80.7,-294.13 143.44,-294.13 174.81,-325.19"></polygon>
+<text text-anchor="middle" x="112.07" y="-328.99" font-family="Times,serif" font-size="14.00">NeoReader</text>
+<text text-anchor="middle" x="112.07" y="-313.99" font-family="Times,serif" font-size="14.00">(retrieve)</text>
+</g>
+<!-- neoreader_collect&#45;&gt;neoreader_retrieve -->
+<g id="edge2" class="edge">
+<title>neoreader_collect-&gt;neoreader_retrieve</title>
+<path fill="none" stroke="black" d="M112.07,-392.11C112.07,-384.06 112.07,-375.21 112.07,-366.7"></path>
+<polygon fill="black" stroke="black" points="115.57,-366.54 112.07,-356.54 108.57,-366.54 115.57,-366.54"></polygon>
+</g>
+<!-- neoreader_consume -->
+<g id="node3" class="node">
+<title>neoreader_consume</title>
+<polygon fill="lightgreen" stroke="black" points="174.81,-227.13 143.44,-258.19 80.7,-258.19 49.33,-227.13 80.7,-196.08 143.44,-196.08 174.81,-227.13"></polygon>
+<text text-anchor="middle" x="112.07" y="-230.93" font-family="Times,serif" font-size="14.00">NeoReader</text>
+<text text-anchor="middle" x="112.07" y="-215.93" font-family="Times,serif" font-size="14.00">(consume)</text>
+</g>
+<!-- neoreader_retrieve&#45;&gt;neoreader_consume -->
+<g id="edge3" class="edge">
+<title>neoreader_retrieve-&gt;neoreader_consume</title>
+<path fill="none" stroke="black" d="M112.07,-294.06C112.07,-286 112.07,-277.16 112.07,-268.64"></path>
+<polygon fill="black" stroke="black" points="115.57,-268.49 112.07,-258.49 108.57,-268.49 115.57,-268.49"></polygon>
+</g>
+<!-- readwise_extract -->
+<g id="node4" class="node">
+<title>readwise_extract</title>
+<polygon fill="lightgreen" stroke="black" points="168.25,-129.08 140.16,-160.13 83.98,-160.13 55.9,-129.08 83.98,-98.03 140.16,-98.03 168.25,-129.08"></polygon>
+<text text-anchor="middle" x="112.07" y="-132.88" font-family="Times,serif" font-size="14.00">Readwise</text>
+<text text-anchor="middle" x="112.07" y="-117.88" font-family="Times,serif" font-size="14.00">(extract)</text>
+</g>
+<!-- neoreader_consume&#45;&gt;readwise_extract -->
+<g id="edge4" class="edge">
+<title>neoreader_consume-&gt;readwise_extract</title>
+<path fill="none" stroke="black" d="M112.07,-196.01C112.07,-187.95 112.07,-179.11 112.07,-170.59"></path>
+<polygon fill="black" stroke="black" points="115.57,-170.43 112.07,-160.43 108.57,-170.43 115.57,-170.43"></polygon>
+</g>
+<!-- obsidian_refine -->
+<g id="node5" class="node">
+<title>obsidian_refine</title>
+<polygon fill="lightgreen" stroke="black" points="106.22,-31.03 79.64,-62.08 26.5,-62.08 -0.07,-31.03 26.5,0.03 79.64,0.03 106.22,-31.03"></polygon>
+<text text-anchor="middle" x="53.07" y="-34.83" font-family="Times,serif" font-size="14.00">Obsidian</text>
+<text text-anchor="middle" x="53.07" y="-19.83" font-family="Times,serif" font-size="14.00">(refine)</text>
+</g>
+<!-- readwise_extract&#45;&gt;obsidian_refine -->
+<g id="edge5" class="edge">
+<title>readwise_extract-&gt;obsidian_refine</title>
+<path fill="none" stroke="black" d="M93.57,-97.95C88.34,-89.45 82.59,-80.08 77.09,-71.13"></path>
+<polygon fill="black" stroke="black" points="79.93,-69.07 71.72,-62.38 73.97,-72.73 79.93,-69.07"></polygon>
+</g>
+<!-- recall_refine -->
+<g id="node6" class="node">
+<title>recall_refine</title>
+<polygon fill="lightgreen" stroke="black" points="217.65,-31.03 194.36,-62.08 147.78,-62.08 124.49,-31.03 147.78,0.03 194.36,0.03 217.65,-31.03"></polygon>
+<text text-anchor="middle" x="171.07" y="-34.83" font-family="Times,serif" font-size="14.00">Recall</text>
+<text text-anchor="middle" x="171.07" y="-19.83" font-family="Times,serif" font-size="14.00">(refine)</text>
+</g>
+<!-- readwise_extract&#45;&gt;recall_refine -->
+<g id="edge6" class="edge">
+<title>readwise_extract-&gt;recall_refine</title>
+<path fill="none" stroke="black" d="M130.58,-97.95C135.8,-89.45 141.56,-80.08 147.05,-71.13"></path>
+<polygon fill="black" stroke="black" points="150.18,-72.73 152.43,-62.38 144.21,-69.07 150.18,-72.73"></polygon>
+</g>
+<!-- source_document -->
+<g id="node7" class="node">
+<title>source_document</title>
+<polygon fill="none" stroke="black" points="149.07,-526.27 75.07,-526.27 75.07,-490.27 149.07,-490.27 149.07,-526.27"></polygon>
+<text text-anchor="middle" x="112.07" y="-504.57" font-family="Times,serif" font-size="14.00">Document</text>
+</g>
+<!-- source_document&#45;&gt;neoreader_collect -->
+<g id="edge1" class="edge">
+<title>source_document-&gt;neoreader_collect</title>
+<path fill="none" stroke="black" d="M112.07,-490.07C112.07,-482.61 112.07,-473.54 112.07,-464.55"></path>
+<polygon fill="black" stroke="black" points="115.57,-464.52 112.07,-454.52 108.57,-464.52 115.57,-464.52"></polygon>
+</g>
+</g>
+</svg>
+</div>
+</div>
+</div>
+</section>
+<section id="how-to-make-a-node-from-the-digraph-svg-string-clickable-in-fasthtml" class="level4">
+<h4 class="anchored" data-anchor-id="how-to-make-a-node-from-the-digraph-svg-string-clickable-in-fasthtml">How to make a node from the <code>Digraph</code> <code>SVG</code>-string clickable in <code>FastHTML</code></h4>
+<ul>
+<li>Add onclick handlers with htmx.ajax calls to the <g> elements you want clickable</g></li>
+<li>Include a target div (#content-area) where content will be swapped</li>
+<li>Add a CSS style attribute so the pointer cursor changes to a hand when hovering over the node</li>
+</ul>
+<p>For example you can add this to the <g> element of the node you want clickable:</g></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>onclick<span class="op">=</span><span class="st">"htmx.ajax('GET', '/recall-retrieve', {target: '#content-area', swap: 'outerHTML'})"</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>style<span class="op">=</span><span class="st">"cursor: pointer;"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>But a more concise way is to add CSS styling to the FastHTML app that targets all nodes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>.node { cursor: pointer<span class="op">;</span> }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That is what we will be using in this application.</p>
+<p>Below is an example of a <code>SVG</code>-string with a clickable node that shows a changing pointer cursor when hovering over it.</p>
+<div id="cell-10" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>svg_sample_click <span class="op">=</span> <span class="st">"""&lt;svg width="268pt" height="338pt" viewBox="0.00 0.00 267.84 338.16" xmlns="http://www.w3.org/2000/svg"&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 334.16)"&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;polygon fill="white" stroke="transparent" points="-4,4 -4,-334.16 263.84,-334.16 263.84,4 -4,4"/&gt;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;g id="node3" class="node" onclick="htmx.ajax('GET', '/recall-retrieve', {target: '#content-area', swap: 'outerHTML'})" style="cursor: pointer;"&gt;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;polygon fill="lightgreen" stroke="black" points="198.09,-129.08 163.76,-160.13 95.08,-160.13 60.75,-129.08 95.08,-98.03 163.76,-98.03 198.09,-129.08"/&gt;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;text text-anchor="middle" x="129.42" y="-132.88" font-family="Times,serif" font-size="14.00"&gt;Recall&lt;/text&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;text text-anchor="middle" x="129.42" y="-117.88" font-family="Times,serif" font-size="14.00"&gt;(retrieve)&lt;/text&gt;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;/g&gt;</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;/svg&gt;"""</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The below example can’t be clicked, because it is not running on a webserver and the GET request will also fail, because the endpoint doesn’t exist yet. But it does show how the pointer changes.</p>
+<div id="cell-12" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>show(Div(NotStr(svg_sample_click), <span class="bu">id</span><span class="op">=</span><span class="st">"content-area"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="content-area"><svg width="268pt" height="338pt" viewbox="0.00 0.00 267.84 338.16" xmlns="http://www.w3.org/2000/svg">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 334.16)">
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-334.16 263.84,-334.16 263.84,4 -4,4"></polygon>
+<g id="node3" class="node" onclick="htmx.ajax('GET', '/recall-retrieve', {target: '#content-area', swap: 'outerHTML'})" style="cursor: pointer;">
+<polygon fill="lightgreen" stroke="black" points="198.09,-129.08 163.76,-160.13 95.08,-160.13 60.75,-129.08 95.08,-98.03 163.76,-98.03 198.09,-129.08"></polygon>
+<text text-anchor="middle" x="129.42" y="-132.88" font-family="Times,serif" font-size="14.00">Recall</text>
+<text text-anchor="middle" x="129.42" y="-117.88" font-family="Times,serif" font-size="14.00">(retrieve)</text>
+</g>
+</g></svg></div>
+</div>
+</div>
+</section>
+</section>
+<section id="create-a-dictionary-from-all-the-nodes-in-the-graph" class="level2">
+<h2 class="anchored" data-anchor-id="create-a-dictionary-from-all-the-nodes-in-the-graph">Create a dictionary from all the nodes in the graph</h2>
+<p>The <code>SVG</code>-string is an XML string. I considered several ways to parse XML string:</p>
+<ul>
+<li><code>BeautifulSoup</code></li>
+<li><code>minidom</code> from <code>xml.dom</code></li>
+<li><code>xml.etree.ElementTree</code></li>
+</ul>
+<p>I choose the latest because it is simpler than <code>minidom</code> from <code>xml.dom</code>. The main advantage of <code>xml.dom</code> is that it supports complete DOM operations. But that isn’t needed in this application. <code>BeautifulSoup</code> is propably more forgiving and versatile than <code>xml.etree.ElementTree</code>, but <code>ElementTree</code> is more than enough for this application and does not add another dependency.</p>
+<p>We only look for <code>node</code> elements in the root of the <code>XML</code> string. We also skip the <code>edge</code> elements.</p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/webapp.py#L23" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="dict_svgnodes" class="level3">
+<h3 class="anchored" data-anchor-id="dict_svgnodes">dict_svgnodes</h3>
+<blockquote class="blockquote">
+<pre><code> dict_svgnodes (svg_str:str)</code></pre>
+</blockquote>
+<p>Example usage of <a href="https://Hopsakee.github.io/infoflow/create_webapp.html#dict_svgnodes"><code>dict_svgnodes()</code></a></p>
+<div id="cell-18" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>nds_dict <span class="op">=</span> dict_svgnodes(svg_sample)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>pprint(nds_dict)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>{'neoreader_collect': {'class': 'node',
+                       'fill': 'lightblue',
+                       'id': 'node1',
+                       'stroke': 'black',
+                       'text': ['NeoReader', '(collect)']},
+ 'neoreader_consume': {'class': 'node',
+                       'fill': 'lightgreen',
+                       'id': 'node3',
+                       'stroke': 'black',
+                       'text': ['NeoReader', '(consume)']},
+ 'neoreader_retrieve': {'class': 'node',
+                        'fill': 'orange',
+                        'id': 'node2',
+                        'stroke': 'black',
+                        'text': ['NeoReader', '(retrieve)']},
+ 'obsidian_refine': {'class': 'node',
+                     'fill': 'lightgreen',
+                     'id': 'node5',
+                     'stroke': 'black',
+                     'text': ['Obsidian', '(refine)']},
+ 'readwise_extract': {'class': 'node',
+                      'fill': 'lightgreen',
+                      'id': 'node4',
+                      'stroke': 'black',
+                      'text': ['Readwise', '(extract)']},
+ 'recall_refine': {'class': 'node',
+                   'fill': 'lightgreen',
+                   'id': 'node6',
+                   'stroke': 'black',
+                   'text': ['Recall', '(refine)']},
+ 'source_document': {'class': 'node',
+                     'fill': 'none',
+                     'id': 'node7',
+                     'stroke': 'black',
+                     'text': ['Document']}}</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="create-clickable-nodes-in-the-svg-string" class="level2">
+<h2 class="anchored" data-anchor-id="create-clickable-nodes-in-the-svg-string">Create clickable nodes in the <code>SVG</code> string</h2>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/webapp.py#L54" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="add_onclick_to_nodes" class="level3">
+<h3 class="anchored" data-anchor-id="add_onclick_to_nodes">add_onclick_to_nodes</h3>
+<blockquote class="blockquote">
+<pre><code> add_onclick_to_nodes (svg_str:str)</code></pre>
+</blockquote>
+<p>Example usage and test</p>
+<div id="cell-22" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>svg_clickable <span class="op">=</span> add_onclick_to_nodes(svg_sample)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-23" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>svg_clickable</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?&gt;\n&lt;!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"\n "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"&gt;\n&lt;!-- Generated by graphviz version 2.43.0 (0)\n --&gt;\n&lt;!-- Title: %3 Pages: 1 --&gt;\n&lt;svg width="226pt" height="534pt"\n viewBox="0.00 0.00 225.61 534.27" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"&gt;\n&lt;g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 530.27)"&gt;\n&lt;title&gt;%3&lt;/title&gt;\n&lt;polygon fill="white" stroke="transparent" points="-4,4 -4,-530.27 221.61,-530.27 221.61,4 -4,4"/&gt;\n&lt;!-- neoreader_collect --&gt;\n&lt;g id="node1" class="node" onclick="htmx.ajax(\'GET\', \'/tool?slug=neoreader\', {target: \'#main-content\', swap: \'outerHTML\'})"&gt;\n&lt;title&gt;neoreader_collect&lt;/title&gt;\n&lt;polygon fill="lightblue" stroke="black" points="174.81,-423.24 143.44,-454.3 80.7,-454.3 49.33,-423.24 80.7,-392.19 143.44,-392.19 174.81,-423.24"/&gt;\n&lt;text text-anchor="middle" x="112.07" y="-427.04" font-family="Times,serif" font-size="14.00"&gt;NeoReader&lt;/text&gt;\n&lt;text text-anchor="middle" x="112.07" y="-412.04" font-family="Times,serif" font-size="14.00"&gt;(collect)&lt;/text&gt;\n&lt;/g&gt;\n&lt;!-- neoreader_retrieve --&gt;\n&lt;g id="node2" class="node" onclick="htmx.ajax(\'GET\', \'/tool?slug=neoreader\', {target: \'#main-content\', swap: \'outerHTML\'})"&gt;\n&lt;title&gt;neoreader_retrieve&lt;/title&gt;\n&lt;polygon fill="orange" stroke="black" points="174.81,-325.19 143.44,-356.24 80.7,-356.24 49.33,-325.19 80.7,-294.13 143.44,-294.13 174.81,-325.19"/&gt;\n&lt;text text-anchor="middle" x="112.07" y="-328.99" font-family="Times,serif" font-size="14.00"&gt;NeoReader&lt;/text&gt;\n&lt;text text-anchor="middle" x="112.07" y="-313.99" font-family="Times,serif" font-size="14.00"&gt;(retrieve)&lt;/text&gt;\n&lt;/g&gt;\n&lt;!-- neoreader_collect&amp;#45;&amp;gt;neoreader_retrieve --&gt;\n&lt;g id="edge2" class="edge"&gt;\n&lt;title&gt;neoreader_collect&amp;#45;&amp;gt;neoreader_retrieve&lt;/title&gt;\n&lt;path fill="none" stroke="black" d="M112.07,-392.11C112.07,-384.06 112.07,-375.21 112.07,-366.7"/&gt;\n&lt;polygon fill="black" stroke="black" points="115.57,-366.54 112.07,-356.54 108.57,-366.54 115.57,-366.54"/&gt;\n&lt;/g&gt;\n&lt;!-- neoreader_consume --&gt;\n&lt;g id="node3" class="node" onclick="htmx.ajax(\'GET\', \'/tool?slug=neoreader\', {target: \'#main-content\', swap: \'outerHTML\'})"&gt;\n&lt;title&gt;neoreader_consume&lt;/title&gt;\n&lt;polygon fill="lightgreen" stroke="black" points="174.81,-227.13 143.44,-258.19 80.7,-258.19 49.33,-227.13 80.7,-196.08 143.44,-196.08 174.81,-227.13"/&gt;\n&lt;text text-anchor="middle" x="112.07" y="-230.93" font-family="Times,serif" font-size="14.00"&gt;NeoReader&lt;/text&gt;\n&lt;text text-anchor="middle" x="112.07" y="-215.93" font-family="Times,serif" font-size="14.00"&gt;(consume)&lt;/text&gt;\n&lt;/g&gt;\n&lt;!-- neoreader_retrieve&amp;#45;&amp;gt;neoreader_consume --&gt;\n&lt;g id="edge3" class="edge"&gt;\n&lt;title&gt;neoreader_retrieve&amp;#45;&amp;gt;neoreader_consume&lt;/title&gt;\n&lt;path fill="none" stroke="black" d="M112.07,-294.06C112.07,-286 112.07,-277.16 112.07,-268.64"/&gt;\n&lt;polygon fill="black" stroke="black" points="115.57,-268.49 112.07,-258.49 108.57,-268.49 115.57,-268.49"/&gt;\n&lt;/g&gt;\n&lt;!-- readwise_extract --&gt;\n&lt;g id="node4" class="node" onclick="htmx.ajax(\'GET\', \'/tool?slug=readwise\', {target: \'#main-content\', swap: \'outerHTML\'})"&gt;\n&lt;title&gt;readwise_extract&lt;/title&gt;\n&lt;polygon fill="lightgreen" stroke="black" points="168.25,-129.08 140.16,-160.13 83.98,-160.13 55.9,-129.08 83.98,-98.03 140.16,-98.03 168.25,-129.08"/&gt;\n&lt;text text-anchor="middle" x="112.07" y="-132.88" font-family="Times,serif" font-size="14.00"&gt;Readwise&lt;/text&gt;\n&lt;text text-anchor="middle" x="112.07" y="-117.88" font-family="Times,serif" font-size="14.00"&gt;(extract)&lt;/text&gt;\n&lt;/g&gt;\n&lt;!-- neoreader_consume&amp;#45;&amp;gt;readwise_extract --&gt;\n&lt;g id="edge4" class="edge"&gt;\n&lt;title&gt;neoreader_consume&amp;#45;&amp;gt;readwise_extract&lt;/title&gt;\n&lt;path fill="none" stroke="black" d="M112.07,-196.01C112.07,-187.95 112.07,-179.11 112.07,-170.59"/&gt;\n&lt;polygon fill="black" stroke="black" points="115.57,-170.43 112.07,-160.43 108.57,-170.43 115.57,-170.43"/&gt;\n&lt;/g&gt;\n&lt;!-- obsidian_refine --&gt;\n&lt;g id="node5" class="node" onclick="htmx.ajax(\'GET\', \'/tool?slug=obsidian\', {target: \'#main-content\', swap: \'outerHTML\'})"&gt;\n&lt;title&gt;obsidian_refine&lt;/title&gt;\n&lt;polygon fill="lightgreen" stroke="black" points="106.22,-31.03 79.64,-62.08 26.5,-62.08 -0.07,-31.03 26.5,0.03 79.64,0.03 106.22,-31.03"/&gt;\n&lt;text text-anchor="middle" x="53.07" y="-34.83" font-family="Times,serif" font-size="14.00"&gt;Obsidian&lt;/text&gt;\n&lt;text text-anchor="middle" x="53.07" y="-19.83" font-family="Times,serif" font-size="14.00"&gt;(refine)&lt;/text&gt;\n&lt;/g&gt;\n&lt;!-- readwise_extract&amp;#45;&amp;gt;obsidian_refine --&gt;\n&lt;g id="edge5" class="edge"&gt;\n&lt;title&gt;readwise_extract&amp;#45;&amp;gt;obsidian_refine&lt;/title&gt;\n&lt;path fill="none" stroke="black" d="M93.57,-97.95C88.34,-89.45 82.59,-80.08 77.09,-71.13"/&gt;\n&lt;polygon fill="black" stroke="black" points="79.93,-69.07 71.72,-62.38 73.97,-72.73 79.93,-69.07"/&gt;\n&lt;/g&gt;\n&lt;!-- recall_refine --&gt;\n&lt;g id="node6" class="node" onclick="htmx.ajax(\'GET\', \'/tool?slug=recall\', {target: \'#main-content\', swap: \'outerHTML\'})"&gt;\n&lt;title&gt;recall_refine&lt;/title&gt;\n&lt;polygon fill="lightgreen" stroke="black" points="217.65,-31.03 194.36,-62.08 147.78,-62.08 124.49,-31.03 147.78,0.03 194.36,0.03 217.65,-31.03"/&gt;\n&lt;text text-anchor="middle" x="171.07" y="-34.83" font-family="Times,serif" font-size="14.00"&gt;Recall&lt;/text&gt;\n&lt;text text-anchor="middle" x="171.07" y="-19.83" font-family="Times,serif" font-size="14.00"&gt;(refine)&lt;/text&gt;\n&lt;/g&gt;\n&lt;!-- readwise_extract&amp;#45;&amp;gt;recall_refine --&gt;\n&lt;g id="edge6" class="edge"&gt;\n&lt;title&gt;readwise_extract&amp;#45;&amp;gt;recall_refine&lt;/title&gt;\n&lt;path fill="none" stroke="black" d="M130.58,-97.95C135.8,-89.45 141.56,-80.08 147.05,-71.13"/&gt;\n&lt;polygon fill="black" stroke="black" points="150.18,-72.73 152.43,-62.38 144.21,-69.07 150.18,-72.73"/&gt;\n&lt;/g&gt;\n&lt;!-- source_document --&gt;\n&lt;g id="node7" class="node" onclick="htmx.ajax(\'GET\', \'/resource?slug=document\', {target: \'#main-content\', swap: \'outerHTML\'})"&gt;\n&lt;title&gt;source_document&lt;/title&gt;\n&lt;polygon fill="none" stroke="black" points="149.07,-526.27 75.07,-526.27 75.07,-490.27 149.07,-490.27 149.07,-526.27"/&gt;\n&lt;text text-anchor="middle" x="112.07" y="-504.57" font-family="Times,serif" font-size="14.00"&gt;Document&lt;/text&gt;\n&lt;/g&gt;\n&lt;!-- source_document&amp;#45;&amp;gt;neoreader_collect --&gt;\n&lt;g id="edge1" class="edge"&gt;\n&lt;title&gt;source_document&amp;#45;&amp;gt;neoreader_collect&lt;/title&gt;\n&lt;path fill="none" stroke="black" d="M112.07,-490.07C112.07,-482.61 112.07,-473.54 112.07,-464.55"/&gt;\n&lt;polygon fill="black" stroke="black" points="115.57,-464.52 112.07,-454.52 108.57,-464.52 115.57,-464.52"/&gt;\n&lt;/g&gt;\n&lt;/g&gt;\n&lt;/svg&gt;\n'</code></pre>
+</div>
+</div>
+<div id="cell-24" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>show(Div(NotStr(svg_clickable)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div><!--?xml version="1.0" encoding="UTF-8" standalone="no"?-->
+
+<!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: %3 Pages: 1 -->
+<svg width="226pt" height="534pt" viewbox="0.00 0.00 225.61 534.27" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 530.27)">
+<title>%3</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-530.27 221.61,-530.27 221.61,4 -4,4"></polygon>
+<!-- neoreader_collect -->
+<g id="node1" class="node" onclick="htmx.ajax('GET', '/tool?slug=neoreader', {target: '#main-content', swap: 'outerHTML'})">
+<title>neoreader_collect</title>
+<polygon fill="lightblue" stroke="black" points="174.81,-423.24 143.44,-454.3 80.7,-454.3 49.33,-423.24 80.7,-392.19 143.44,-392.19 174.81,-423.24"></polygon>
+<text text-anchor="middle" x="112.07" y="-427.04" font-family="Times,serif" font-size="14.00">NeoReader</text>
+<text text-anchor="middle" x="112.07" y="-412.04" font-family="Times,serif" font-size="14.00">(collect)</text>
+</g>
+<!-- neoreader_retrieve -->
+<g id="node2" class="node" onclick="htmx.ajax('GET', '/tool?slug=neoreader', {target: '#main-content', swap: 'outerHTML'})">
+<title>neoreader_retrieve</title>
+<polygon fill="orange" stroke="black" points="174.81,-325.19 143.44,-356.24 80.7,-356.24 49.33,-325.19 80.7,-294.13 143.44,-294.13 174.81,-325.19"></polygon>
+<text text-anchor="middle" x="112.07" y="-328.99" font-family="Times,serif" font-size="14.00">NeoReader</text>
+<text text-anchor="middle" x="112.07" y="-313.99" font-family="Times,serif" font-size="14.00">(retrieve)</text>
+</g>
+<!-- neoreader_collect&#45;&gt;neoreader_retrieve -->
+<g id="edge2" class="edge">
+<title>neoreader_collect-&gt;neoreader_retrieve</title>
+<path fill="none" stroke="black" d="M112.07,-392.11C112.07,-384.06 112.07,-375.21 112.07,-366.7"></path>
+<polygon fill="black" stroke="black" points="115.57,-366.54 112.07,-356.54 108.57,-366.54 115.57,-366.54"></polygon>
+</g>
+<!-- neoreader_consume -->
+<g id="node3" class="node" onclick="htmx.ajax('GET', '/tool?slug=neoreader', {target: '#main-content', swap: 'outerHTML'})">
+<title>neoreader_consume</title>
+<polygon fill="lightgreen" stroke="black" points="174.81,-227.13 143.44,-258.19 80.7,-258.19 49.33,-227.13 80.7,-196.08 143.44,-196.08 174.81,-227.13"></polygon>
+<text text-anchor="middle" x="112.07" y="-230.93" font-family="Times,serif" font-size="14.00">NeoReader</text>
+<text text-anchor="middle" x="112.07" y="-215.93" font-family="Times,serif" font-size="14.00">(consume)</text>
+</g>
+<!-- neoreader_retrieve&#45;&gt;neoreader_consume -->
+<g id="edge3" class="edge">
+<title>neoreader_retrieve-&gt;neoreader_consume</title>
+<path fill="none" stroke="black" d="M112.07,-294.06C112.07,-286 112.07,-277.16 112.07,-268.64"></path>
+<polygon fill="black" stroke="black" points="115.57,-268.49 112.07,-258.49 108.57,-268.49 115.57,-268.49"></polygon>
+</g>
+<!-- readwise_extract -->
+<g id="node4" class="node" onclick="htmx.ajax('GET', '/tool?slug=readwise', {target: '#main-content', swap: 'outerHTML'})">
+<title>readwise_extract</title>
+<polygon fill="lightgreen" stroke="black" points="168.25,-129.08 140.16,-160.13 83.98,-160.13 55.9,-129.08 83.98,-98.03 140.16,-98.03 168.25,-129.08"></polygon>
+<text text-anchor="middle" x="112.07" y="-132.88" font-family="Times,serif" font-size="14.00">Readwise</text>
+<text text-anchor="middle" x="112.07" y="-117.88" font-family="Times,serif" font-size="14.00">(extract)</text>
+</g>
+<!-- neoreader_consume&#45;&gt;readwise_extract -->
+<g id="edge4" class="edge">
+<title>neoreader_consume-&gt;readwise_extract</title>
+<path fill="none" stroke="black" d="M112.07,-196.01C112.07,-187.95 112.07,-179.11 112.07,-170.59"></path>
+<polygon fill="black" stroke="black" points="115.57,-170.43 112.07,-160.43 108.57,-170.43 115.57,-170.43"></polygon>
+</g>
+<!-- obsidian_refine -->
+<g id="node5" class="node" onclick="htmx.ajax('GET', '/tool?slug=obsidian', {target: '#main-content', swap: 'outerHTML'})">
+<title>obsidian_refine</title>
+<polygon fill="lightgreen" stroke="black" points="106.22,-31.03 79.64,-62.08 26.5,-62.08 -0.07,-31.03 26.5,0.03 79.64,0.03 106.22,-31.03"></polygon>
+<text text-anchor="middle" x="53.07" y="-34.83" font-family="Times,serif" font-size="14.00">Obsidian</text>
+<text text-anchor="middle" x="53.07" y="-19.83" font-family="Times,serif" font-size="14.00">(refine)</text>
+</g>
+<!-- readwise_extract&#45;&gt;obsidian_refine -->
+<g id="edge5" class="edge">
+<title>readwise_extract-&gt;obsidian_refine</title>
+<path fill="none" stroke="black" d="M93.57,-97.95C88.34,-89.45 82.59,-80.08 77.09,-71.13"></path>
+<polygon fill="black" stroke="black" points="79.93,-69.07 71.72,-62.38 73.97,-72.73 79.93,-69.07"></polygon>
+</g>
+<!-- recall_refine -->
+<g id="node6" class="node" onclick="htmx.ajax('GET', '/tool?slug=recall', {target: '#main-content', swap: 'outerHTML'})">
+<title>recall_refine</title>
+<polygon fill="lightgreen" stroke="black" points="217.65,-31.03 194.36,-62.08 147.78,-62.08 124.49,-31.03 147.78,0.03 194.36,0.03 217.65,-31.03"></polygon>
+<text text-anchor="middle" x="171.07" y="-34.83" font-family="Times,serif" font-size="14.00">Recall</text>
+<text text-anchor="middle" x="171.07" y="-19.83" font-family="Times,serif" font-size="14.00">(refine)</text>
+</g>
+<!-- readwise_extract&#45;&gt;recall_refine -->
+<g id="edge6" class="edge">
+<title>readwise_extract-&gt;recall_refine</title>
+<path fill="none" stroke="black" d="M130.58,-97.95C135.8,-89.45 141.56,-80.08 147.05,-71.13"></path>
+<polygon fill="black" stroke="black" points="150.18,-72.73 152.43,-62.38 144.21,-69.07 150.18,-72.73"></polygon>
+</g>
+<!-- source_document -->
+<g id="node7" class="node" onclick="htmx.ajax('GET', '/resource?slug=document', {target: '#main-content', swap: 'outerHTML'})">
+<title>source_document</title>
+<polygon fill="none" stroke="black" points="149.07,-526.27 75.07,-526.27 75.07,-490.27 149.07,-490.27 149.07,-526.27"></polygon>
+<text text-anchor="middle" x="112.07" y="-504.57" font-family="Times,serif" font-size="14.00">Document</text>
+</g>
+<!-- source_document&#45;&gt;neoreader_collect -->
+<g id="edge1" class="edge">
+<title>source_document-&gt;neoreader_collect</title>
+<path fill="none" stroke="black" d="M112.07,-490.07C112.07,-482.61 112.07,-473.54 112.07,-464.55"></path>
+<polygon fill="black" stroke="black" points="115.57,-464.52 112.07,-454.52 108.57,-464.52 115.57,-464.52"></polygon>
+</g>
+</g>
+</svg>
+</div>
+</div>
+</div>
+<div id="cell-25" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>test(svg_clickable, <span class="st">"Reader"</span>, operator.contains) <span class="co"># Check if the node name is in the svg string</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>test(svg_clickable, <span class="st">"onclick"</span>, operator.contains) <span class="co"># Check if the onclick attribute is in the svg string</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>test(svg_clickable, <span class="st">"#main-content"</span>, operator.contains) <span class="co"># Check if the id is in the svg string</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>test(svg_clickable, <span class="st">"&lt;svg width="</span>, operator.contains) <span class="co"># Check if the svg tag is in the svg string</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>test(svg_clickable, <span class="st">"xmlns"</span>, operator.contains) <span class="co"># Check if the xmlns attribute is in the svg string</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/Hopsakee\.github\.io\/infoflow");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/Hopsakee/infoflow/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

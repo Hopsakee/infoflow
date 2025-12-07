@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="This module defines the classes we use to represent the PKM workflow.">
+
+<title>Define Classes and create the SQLite database – infoflow</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-000f0825b9c55ed21d14970d810c14a9.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="Define Classes and create the SQLite database – infoflow">
+<meta property="og:description" content="This module defines the classes we use to represent the PKM workflow.">
+<meta property="og:site_name" content="infoflow">
+<meta name="twitter:title" content="Define Classes and create the SQLite database – infoflow">
+<meta name="twitter:description" content="This module defines the classes we use to represent the PKM workflow.">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">infoflow</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./classes_db.html">Define Classes and create the SQLite database</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">infoflow</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./classes_db.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Define Classes and create the SQLite database</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./create_instances.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Create Instances</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./create_vizualisation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Create graphiz visualisation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./create_webapp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Create the webapplication logic and visualisations</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#using-pydantic-with-minidataapi-and-sqlite" id="toc-using-pydantic-with-minidataapi-and-sqlite" class="nav-link active" data-scroll-target="#using-pydantic-with-minidataapi-and-sqlite">Using Pydantic with MiniDataAPI and SQLite</a></li>
+  <li><a href="#enum-classes" id="toc-enum-classes" class="nav-link" data-scroll-target="#enum-classes">Enum Classes</a>
+  <ul class="collapse">
+  <li><a href="#organizationsystem" id="toc-organizationsystem" class="nav-link" data-scroll-target="#organizationsystem">OrganizationSystem</a></li>
+  <li><a href="#phasequality" id="toc-phasequality" class="nav-link" data-scroll-target="#phasequality">PhaseQuality</a></li>
+  <li><a href="#phase" id="toc-phase" class="nav-link" data-scroll-target="#phase">Phase</a></li>
+  <li><a href="#method" id="toc-method" class="nav-link" data-scroll-target="#method">Method</a></li>
+  <li><a href="#informationtype" id="toc-informationtype" class="nav-link" data-scroll-target="#informationtype">InformationType</a></li>
+  </ul></li>
+  <li><a href="#base-class-to-use-for-database-classes" id="toc-base-class-to-use-for-database-classes" class="nav-link" data-scroll-target="#base-class-to-use-for-database-classes">Base class to use for database classes</a>
+  <ul class="collapse">
+  <li><a href="#sluggedmodel" id="toc-sluggedmodel" class="nav-link" data-scroll-target="#sluggedmodel">SluggedModel</a></li>
+  </ul></li>
+  <li><a href="#pkm-workflow-classes" id="toc-pkm-workflow-classes" class="nav-link" data-scroll-target="#pkm-workflow-classes">PKM Workflow Classes</a></li>
+  <li><a href="#explainer-for-the-pydantic-dataclass-tool" id="toc-explainer-for-the-pydantic-dataclass-tool" class="nav-link" data-scroll-target="#explainer-for-the-pydantic-dataclass-tool">Explainer for the Pydantic Dataclass <code>Tool</code></a>
+  <ul class="collapse">
+  <li><a href="#method-tool.from_db" id="toc-method-tool.from_db" class="nav-link" data-scroll-target="#method-tool.from_db">Method <code>Tool.from_db</code></a></li>
+  </ul></li>
+  <li><a href="#informationitem.from_db" id="toc-informationitem.from_db" class="nav-link" data-scroll-target="#informationitem.from_db">2. InformationItem.from_db</a></li>
+  <li><a href="#improvement.from_db" id="toc-improvement.from_db" class="nav-link" data-scroll-target="#improvement.from_db">3. Improvement.from_db</a></li>
+  <li><a href="#conceptual-pattern-across-all-three" id="toc-conceptual-pattern-across-all-three" class="nav-link" data-scroll-target="#conceptual-pattern-across-all-three">Conceptual pattern across all three</a></li>
+  <li><a href="#tool.from_db" id="toc-tool.from_db" class="nav-link" data-scroll-target="#tool.from_db">1. Tool.from_db</a></li>
+  <li><a href="#informationitem.from_db-1" id="toc-informationitem.from_db-1" class="nav-link" data-scroll-target="#informationitem.from_db-1">2. InformationItem.from_db</a></li>
+  <li><a href="#improvement.from_db-1" id="toc-improvement.from_db-1" class="nav-link" data-scroll-target="#improvement.from_db-1">3. Improvement.from_db</a></li>
+  <li><a href="#conceptual-pattern-across-all-three-1" id="toc-conceptual-pattern-across-all-three-1" class="nav-link" data-scroll-target="#conceptual-pattern-across-all-three-1">Conceptual pattern across all three</a>
+  <ul class="collapse">
+  <li><a href="#phasequalitydata" id="toc-phasequalitydata" class="nav-link" data-scroll-target="#phasequalitydata">PhaseQualityData</a></li>
+  <li><a href="#tool" id="toc-tool" class="nav-link" data-scroll-target="#tool">Tool</a></li>
+  <li><a href="#phasemethoddata" id="toc-phasemethoddata" class="nav-link" data-scroll-target="#phasemethoddata">PhaseMethodData</a></li>
+  <li><a href="#phasetoolflowdata" id="toc-phasetoolflowdata" class="nav-link" data-scroll-target="#phasetoolflowdata">PhaseToolflowData</a></li>
+  <li><a href="#informationitem" id="toc-informationitem" class="nav-link" data-scroll-target="#informationitem">InformationItem</a></li>
+  <li><a href="#improvement" id="toc-improvement" class="nav-link" data-scroll-target="#improvement">Improvement</a></li>
+  </ul></li>
+  <li><a href="#sqlite-database" id="toc-sqlite-database" class="nav-link" data-scroll-target="#sqlite-database">SQLite database</a>
+  <ul class="collapse">
+  <li><a href="#create_db" id="toc-create_db" class="nav-link" data-scroll-target="#create_db">create_db</a></li>
+  <li><a href="#create_tables_from_pydantic" id="toc-create_tables_from_pydantic" class="nav-link" data-scroll-target="#create_tables_from_pydantic">create_tables_from_pydantic</a></li>
+  <li><a href="#dict_from_db" id="toc-dict_from_db" class="nav-link" data-scroll-target="#dict_from_db">dict_from_db</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/Hopsakee/infoflow/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="classes_db.html.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Define Classes and create the SQLite database</h1>
+</div>
+
+<div>
+  <div class="description">
+    This module defines the classes we use to represent the PKM workflow.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>We use <code>from __future__ import annotations</code> to support forward references in type hints. To be precise in the <code>@classmethod</code> we create to keep track of all instances of the class.</p>
+<section id="using-pydantic-with-minidataapi-and-sqlite" class="level2">
+<h2 class="anchored" data-anchor-id="using-pydantic-with-minidataapi-and-sqlite">Using Pydantic with MiniDataAPI and SQLite</h2>
+<p>We want to use <code>Pydantic</code> Dataclasses to enable typechecking and validation. We also want to use the Dataclasses with the <code>MiniDataAPI</code> to create the tables in the <code>SQLite</code> database. But <code>SQLite</code> only has datatypes: <code>NULL</code>, <code>INTEGER</code>, <code>REAL</code>, <code>TEXT</code>, and <code>BLOB</code>. So no <code>list</code> or any of the Dataclass(Enum) types we use.</p>
+<p>To be able to use both <code>Pydanctic</code> and the <code>MiniDataAPI</code> we will do two things:</p>
+<ol type="1">
+<li>Define a Pydantic Dataclass with the correct datatypes and a Dataclass that has the same fields as the Pydantic Dataclass, but with datatypes that can be used with SQLite.</li>
+<li>We add <code>@field_serializer</code> methods to the Pydantic Dataclass that convert the fields to JSON strings when we use the method <code>.model_dump()</code> on the instance of the Pydantic Dataclass. These serialised JSON strings can then be added to the SQLite database.</li>
+<li>We also use the <code>@field_validator</code> decorator to convert the JSON strings back to the correct datatypes when we load the data from the SQLite database back into the Pydantic Dataclass.</li>
+</ol>
+<p>This way we can:</p>
+<ul>
+<li>create instances with the Pydantic Dataclass to have easy typechecking and validation.</li>
+<li>convert this instances to <code>MiniDataAPI</code> and <code>SQLite</code> friendly datatypes using <code>.model_dump()</code> on the instance, that we can then add to the database.</li>
+<li>load the data from the SQLite database back into the Pydantic Dataclass.</li>
+</ul>
+<p>The exact implementation can be found below where the Classes are defined.</p>
+<section id="track-instances-of-classes" class="level4">
+<h4 class="anchored" data-anchor-id="track-instances-of-classes">Track instances of classes</h4>
+<p>We also want to keep track of the instances available for each class. Therefore we need some higher order magic.</p>
+<ul>
+<li>a list in the class to store the instances</li>
+<li>a <strong>init</strong> method to add the instance to the list</li>
+<li>a classmethod to get the list of instances</li>
+</ul>
+<p>We can’t just add a <code>_instances = []</code> statement to the Class, because Pydantic will then assume it is a model field (private attribute). We need to tell Pydantic to ignore the _instances class variable as a model field and treat is as a class variable. Therefore we need to import <code>ClassVar</code> from <code>typing</code> and use it to type the _instances variable.</p>
+</section>
+</section>
+<section id="enum-classes" class="level2">
+<h2 class="anchored" data-anchor-id="enum-classes">Enum Classes</h2>
+<p>First we define the possible values of the different variables that are available in the classes. We use the module <code>enum</code> to define <strong>Enumerations</strong>. We use this to bind the possible values to a variable name, making the code more readable and maintainable.</p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L58" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="organizationsystem" class="level3">
+<h3 class="anchored" data-anchor-id="organizationsystem">OrganizationSystem</h3>
+<blockquote class="blockquote">
+<pre><code> OrganizationSystem (value, names=None, module=None, qualname=None,
+                     type=None, start=1, boundary=None)</code></pre>
+</blockquote>
+<p><em>How tools organize and structure information.</em></p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L51" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="phasequality" class="level3">
+<h3 class="anchored" data-anchor-id="phasequality">PhaseQuality</h3>
+<blockquote class="blockquote">
+<pre><code> PhaseQuality (value, names=None, module=None, qualname=None, type=None,
+               start=1, boundary=None)</code></pre>
+</blockquote>
+<p><em>Quality rating for how well a tool performs in each phase.</em></p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L43" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="phase" class="level3">
+<h3 class="anchored" data-anchor-id="phase">Phase</h3>
+<blockquote class="blockquote">
+<pre><code> Phase (value, names=None, module=None, qualname=None, type=None, start=1,
+        boundary=None)</code></pre>
+</blockquote>
+<p><em>The five phases of the PKM workflow.</em></p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L37" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="method" class="level3">
+<h3 class="anchored" data-anchor-id="method">Method</h3>
+<blockquote class="blockquote">
+<pre><code> Method (value, names=None, module=None, qualname=None, type=None,
+         start=1, boundary=None)</code></pre>
+</blockquote>
+<p><em>How actions are performed - manually or automatically.</em></p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L22" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="informationtype" class="level3">
+<h3 class="anchored" data-anchor-id="informationtype">InformationType</h3>
+<blockquote class="blockquote">
+<pre><code> InformationType (value, names=None, module=None, qualname=None,
+                  type=None, start=1, boundary=None)</code></pre>
+</blockquote>
+<p><em>Information content types that flow through the PKM workflow.</em></p>
+<div id="cell-12" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>Phase(<span class="st">"refine"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>&lt;Phase.REFINE: 'refine'&gt;</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="base-class-to-use-for-database-classes" class="level2">
+<h2 class="anchored" data-anchor-id="base-class-to-use-for-database-classes">Base class to use for database classes</h2>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L66" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="sluggedmodel" class="level3">
+<h3 class="anchored" data-anchor-id="sluggedmodel">SluggedModel</h3>
+<blockquote class="blockquote">
+<pre><code> SluggedModel ()</code></pre>
+</blockquote>
+<p>*!!! abstract “Usage Documentation” <a href="../concepts/models.md">Models</a></p>
+<p>A base class for creating Pydantic models.</p>
+<p>Attributes: <strong>class_vars</strong>: The names of the class variables defined on the model. <strong>private_attributes</strong>: Metadata about the private attributes of the model. <strong>signature</strong>: The synthesized <code>__init__</code> [<code>Signature</code>][inspect.Signature] of the model.</p>
+<pre><code>__pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+__pydantic_core_schema__: The core schema of the model.
+__pydantic_custom_init__: Whether the model has a custom `__init__` function.
+__pydantic_decorators__: Metadata containing the decorators defined on the model.
+    This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+__pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+    __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+__pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+__pydantic_post_init__: The name of the post-init method for the model, if defined.
+__pydantic_root_model__: Whether the model is a [`RootModel`][pydantic.root_model.RootModel].
+__pydantic_serializer__: The `pydantic-core` `SchemaSerializer` used to dump instances of the model.
+__pydantic_validator__: The `pydantic-core` `SchemaValidator` used to validate instances of the model.
+
+__pydantic_fields__: A dictionary of field names and their corresponding [`FieldInfo`][pydantic.fields.FieldInfo] objects.
+__pydantic_computed_fields__: A dictionary of computed field names and their corresponding [`ComputedFieldInfo`][pydantic.fields.ComputedFieldInfo] objects.
+
+__pydantic_extra__: A dictionary containing extra values, if [`extra`][pydantic.config.ConfigDict.extra]
+    is set to `'allow'`.
+__pydantic_fields_set__: The names of fields explicitly set during instantiation.
+__pydantic_private__: Values of private attributes set on the model instance.*</code></pre>
+</section>
+</section>
+<section id="pkm-workflow-classes" class="level2">
+<h2 class="anchored" data-anchor-id="pkm-workflow-classes">PKM Workflow Classes</h2>
+<p>Next we create a dataclass for each item we need to be present in the PKM workflow.</p>
+<p><strong>Pydantic Dataclasses</strong></p>
+<p>Used for typechecking.</p>
+<p>When creating a new instance for an <a href="https://Hopsakee.github.io/infoflow/classes_db.html#informationitem"><code>InformationItem</code></a> the <code>toolflow</code> must be given as a list of <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a> objects. The typechecking makes sure that any <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a> object mentioned in the <code>toolfow</code> list, does exist as an actual <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a> instance. So make sure to first create all the <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a> instances that are needed for an <a href="https://Hopsakee.github.io/infoflow/classes_db.html#informationitem"><code>InformationItem</code></a>, before creating the <a href="https://Hopsakee.github.io/infoflow/classes_db.html#informationitem"><code>InformationItem</code></a> instance.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>I had some serious trouble getting the Pydantic dataclass validations to work. One of the issues is described above and is about SQLite not supporting all datatypes. A second major issue is that the Pydantic Dataclasses reference each other. The <a href="https://Hopsakee.github.io/infoflow/classes_db.html#informationitem"><code>InformationItem</code></a> references the <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a> in the <code>toolflow</code> field. I would also be convenient to store all the <a href="https://Hopsakee.github.io/infoflow/classes_db.html#informationitem"><code>InformationItem</code></a>s that can be used with a certain <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a>, but in that case we would create a circular reference between <a href="https://Hopsakee.github.io/infoflow/classes_db.html#informationitem"><code>InformationItem</code></a> and <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a>.</p>
+<p>We decided to remove the <code>information_items</code> list from <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a>. When we need to get all the <a href="https://Hopsakee.github.io/infoflow/classes_db.html#informationitem"><code>InformationItem</code></a>s that are supported by a <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a> we can write a Python function or do a SQL-query on the SQLite database.</p>
+<p>But then we are left with the fact that we want a list of <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a>s that exist. These are the options considered:</p>
+<ul>
+<li><code>toolflow: list[Tool]</code></li>
+<li><code>toolflow: list[Tool.name]</code></li>
+<li><code>toolflow: list[str]</code></li>
+</ul>
+<p>The last option is used in combination with validation to ensure each string is a valid Tool.name.</p>
+<p>Here’s why this is the best approach:</p>
+<ul>
+<li>Clean serialization (no complex object embedding)</li>
+<li>Human-readable in the database</li>
+<li>Type safety through validation</li>
+<li>Easy to query</li>
+</ul>
+<p>The same goes for the <a href="https://Hopsakee.github.io/infoflow/classes_db.html#improvement"><code>Improvement</code></a> class and the field <code>tool</code>.</p>
+</div>
+</div>
+</section>
+<section id="explainer-for-the-pydantic-dataclass-tool" class="level2">
+<h2 class="anchored" data-anchor-id="explainer-for-the-pydantic-dataclass-tool">Explainer for the Pydantic Dataclass <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a></h2>
+<section id="method-tool.from_db" class="level3">
+<h3 class="anchored" data-anchor-id="method-tool.from_db">Method <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool.from_db"><code>Tool.from_db</code></a></h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="at">@classmethod</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> from_db(cls, db_record):</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    phase_quality <span class="op">=</span> PhaseQualityData(</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        collect<span class="op">=</span>PhaseQuality(db_record[<span class="st">'collect_quality'</span>]),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        retrieve<span class="op">=</span>PhaseQuality(db_record[<span class="st">'retrieve_quality'</span>]),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        consume<span class="op">=</span>PhaseQuality(db_record[<span class="st">'consume_quality'</span>]),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        extract<span class="op">=</span>PhaseQuality(db_record[<span class="st">'extract_quality'</span>]),</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        refine<span class="op">=</span>PhaseQuality(db_record[<span class="st">'refine_quality'</span>])</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    org_systems <span class="op">=</span> [OrganizationSystem(s) <span class="cf">for</span> s <span class="kw">in</span> json.loads(db_record[<span class="st">'organization_system'</span>])]</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cls(</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>        <span class="bu">id</span><span class="op">=</span>db_record[<span class="st">'id'</span>],</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        name<span class="op">=</span>db_record[<span class="st">'name'</span>],</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>        description<span class="op">=</span>db_record.get(<span class="st">'description'</span>),</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        organization_system<span class="op">=</span>org_systems,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        phase_quality<span class="op">=</span>phase_quality,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        collect<span class="op">=</span>db_record[<span class="st">'collect'</span>],</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>        retrieve<span class="op">=</span>db_record[<span class="st">'retrieve'</span>],</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>        consume<span class="op">=</span>db_record[<span class="st">'consume'</span>],</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>        extract<span class="op">=</span>db_record[<span class="st">'extract'</span>],</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>        refine<span class="op">=</span>db_record[<span class="st">'refine'</span>]</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Input</strong>: <code>db_record</code> is a row from the <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:110:8-126:31">Tools</a> table (e.g.&nbsp;a dict-like object from fastlite).</li>
+<li><strong>Rebuild <code>phase_quality</code></strong>:
+<ul>
+<li>DB stores each quality as a string (<code>'na' | 'bad' | 'ok' | 'great'</code>).</li>
+<li><a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:65:0-70:49">PhaseQualityData</a> is reconstructed by wrapping each DB value with the <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:50:0-55:19">PhaseQuality</a> enum.</li>
+</ul></li>
+<li><strong>Rebuild <code>organization_system</code></strong>:
+<ul>
+<li>DB stores it as a JSON string representing a list of enum values, e.g.&nbsp;<code>["tags","folders"]</code>.</li>
+<li><code>json.loads</code> turns that into a Python list of strings.</li>
+<li>Each string is turned into an <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:57:0-62:37">OrganizationSystem</a> enum instance.</li>
+</ul></li>
+<li><strong>Instantiate <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:72:0-133:316">Tool</a></strong>:
+<ul>
+<li>Pass all the primitive fields straight from <code>db_record</code>.</li>
+<li>Pass the reconstructed <code>phase_quality</code> and <code>organization_system</code>.</li>
+</ul></li>
+<li><strong>Side-effect</strong>:
+<ul>
+<li><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:99:4-101:47"><strong>init</strong></a> registers the instance in <code>Tool._instances</code> keyed by <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:87:4-90:45">slug</a>.</li>
+</ul></li>
+</ul>
+<p><strong>In short</strong>: <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a> converts DB‑friendly fields (JSON/string) back into enum-rich, structured Pydantic objects.</p>
+<hr>
+</section>
+</section>
+<section id="informationitem.from_db" class="level2">
+<h2 class="anchored" data-anchor-id="informationitem.from_db">2. <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:225:4-235:117">InformationItem.from_db</a></h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="at">@classmethod</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> from_db(cls, db_record):</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    toolflow <span class="op">=</span> PhaseToolflowData(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        collect<span class="op">=</span>cls._parse_toolflow(db_record[<span class="st">'collect_toolflow'</span>]),</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        retrieve<span class="op">=</span>cls._parse_toolflow(db_record[<span class="st">'retrieve_toolflow'</span>]),</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        consume<span class="op">=</span>cls._parse_toolflow(db_record[<span class="st">'consume_toolflow'</span>]),</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>        extract<span class="op">=</span>cls._parse_toolflow(db_record[<span class="st">'extract_toolflow'</span>]),</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        refine<span class="op">=</span>cls._parse_toolflow(db_record[<span class="st">'refine_toolflow'</span>])</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    method <span class="op">=</span> PhaseMethodData(</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        collect<span class="op">=</span>db_record[<span class="st">'collect_method'</span>],</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        retrieve<span class="op">=</span>db_record[<span class="st">'retrieve_method'</span>],</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        consume<span class="op">=</span>db_record[<span class="st">'consume_method'</span>],</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        extract<span class="op">=</span>db_record[<span class="st">'extract_method'</span>],</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>        refine<span class="op">=</span>db_record[<span class="st">'refine_method'</span>]</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    info_type <span class="op">=</span> InformationType(db_record[<span class="st">'info_type'</span>])</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cls(</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>        <span class="bu">id</span><span class="op">=</span>db_record[<span class="st">'id'</span>],</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>        name<span class="op">=</span>db_record[<span class="st">'name'</span>],</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>        info_type<span class="op">=</span>info_type,</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>        method<span class="op">=</span>method,</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>        toolflow<span class="op">=</span>toolflow</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The helper:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">@staticmethod</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _parse_toolflow(v):</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> v <span class="kw">is</span> <span class="va">None</span>: <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(v, <span class="bu">str</span>) <span class="kw">and</span> v.startswith(<span class="st">'['</span>): <span class="cf">return</span> json.loads(v)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Input</strong>: a row from <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:196:8-211:32">InformationItems</a>.</li>
+<li><strong>Rebuild <code>toolflow</code></strong>:
+<ul>
+<li>DB stores each <code>*_toolflow</code> as either:
+<ul>
+<li><code>NULL</code>/<code>None</code>,</li>
+<li>a plain string (single tool),</li>
+<li>or a JSON-encoded list (multiple tools).</li>
+</ul></li>
+<li><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:218:4-223:16">_parse_toolflow</a>:
+<ul>
+<li>returns <code>None</code> for <code>None</code>,</li>
+<li><code>json.loads</code> if it looks like a JSON list (starts with <code>'['</code>),</li>
+<li>otherwise leaves the string as‑is.</li>
+</ul></li>
+<li>Those values feed into <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:144:0-159:40">PhaseToolflowData</a> (which itself sanitizes names via validators).</li>
+</ul></li>
+<li><strong>Rebuild <code>method</code></strong>:
+<ul>
+<li>Note: DB stores method values as strings (<code>"manual"</code>, <code>"automatic"</code>, <code>"na"</code> or <code>None</code>).</li>
+<li><a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:136:0-141:47">PhaseMethodData</a> fields are annotated as <code>Method | None</code>, so Pydantic will convert those strings to <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:36:0-40:27">Method</a> enums automatically.</li>
+</ul></li>
+<li><strong>Rebuild <code>info_type</code></strong>:
+<ul>
+<li>DB stores <code>info_type</code> as its string value (e.g.&nbsp;<code>"book"</code>).</li>
+<li>This is wrapped into <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:21:0-34:33">InformationType</a>.</li>
+</ul></li>
+<li><strong>Instantiate <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:163:0-235:117">InformationItem</a></strong>:
+<ul>
+<li>Pass the reconstructed <code>info_type</code>, <code>method</code>, <code>toolflow</code>, plus <code>id</code> and <code>name</code>.</li>
+<li><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:99:4-101:47"><strong>init</strong></a> adds the instance to <code>InformationItem._instances</code>.</li>
+</ul></li>
+</ul>
+<p><strong>In short</strong>: <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a> reverses the flattening that turned nested structures (<a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:136:0-141:47">PhaseMethodData</a>, <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:144:0-159:40">PhaseToolflowData</a>, <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:21:0-34:33">InformationType</a>) into many DB columns + JSON strings.</p>
+<hr>
+</section>
+<section id="improvement.from_db" class="level2">
+<h2 class="anchored" data-anchor-id="improvement.from_db">3. <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:295:4-298:171">Improvement.from_db</a></h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="at">@classmethod</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> from_db(cls, db_record):</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    phase <span class="op">=</span> Phase(db_record[<span class="st">'phase'</span>])</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cls(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">id</span><span class="op">=</span>db_record[<span class="st">'id'</span>],</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span>db_record[<span class="st">'title'</span>],</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        what<span class="op">=</span>db_record[<span class="st">'what'</span>],</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>        why<span class="op">=</span>db_record[<span class="st">'why'</span>],</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        prio<span class="op">=</span>db_record[<span class="st">'prio'</span>],</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>        tool<span class="op">=</span>db_record[<span class="st">'tool'</span>],</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        phase<span class="op">=</span>phase</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Input</strong>: a row from <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:272:8-282:21">Improvements</a>.</li>
+<li><strong>Rebuild <code>phase</code></strong>:
+<ul>
+<li>DB stores <code>phase</code> as a string (e.g.&nbsp;<code>"collect"</code>).</li>
+<li>Wrap in the <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:42:0-48:21">Phase</a> enum.</li>
+</ul></li>
+<li><strong>Instantiate <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:238:0-298:171">Improvement</a></strong>:
+<ul>
+<li>All other fields are passed through as-is.</li>
+<li><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:99:4-101:47"><strong>init</strong></a> registers in <code>Improvement._instances</code>.</li>
+<li><code>tool</code> will be validated against <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:103:4-105:29">Tool.get_instances()</a> by the <code>field_validator</code>, so this will raise if the referenced tool slug is unknown.</li>
+</ul></li>
+</ul>
+<p><strong>In short</strong>: <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a> here is simpler: it only converts the stored phase string to a <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:42:0-48:21">Phase</a> enum and lets Pydantic + validators do the rest.</p>
+<hr>
+</section>
+<section id="conceptual-pattern-across-all-three" class="level2">
+<h2 class="anchored" data-anchor-id="conceptual-pattern-across-all-three">Conceptual pattern across all three</h2>
+<ul>
+<li><strong>DB schema is “flattened”</strong>:
+<ul>
+<li>Enums → strings.</li>
+<li>Lists/tuples → JSON text.</li>
+<li>Nested models → multiple columns.</li>
+</ul></li>
+<li><strong><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:92:4-95:19">flatten_for_db</a></strong> does the forward conversion to DB‑friendly fields.</li>
+<li><strong><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a></strong> does the reverse: rehydrate Enums, nested Pydantic models, and collections from that DB representation, returning fully-typed domain models ready for use in the app.</li>
+</ul>
+<p>If you want, I can also trace one concrete row (e.g.&nbsp;a <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:72:0-133:316">Tool</a> with multiple <code>organization_system</code> values) through <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:92:4-95:19">flatten_for_db</a> → SQLite row → <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a> for a more step-by-step example.I’ll open <code>infoflow/classdb.py</code>, find the <a href="https://Hopsakee.github.io/infoflow/classes_db.html#informationitem"><code>InformationItem</code></a>, <a href="https://Hopsakee.github.io/infoflow/classes_db.html#tool"><code>Tool</code></a>, and <a href="https://Hopsakee.github.io/infoflow/classes_db.html#improvement"><code>Improvement</code></a> Pydantic dataclasses, and then walk through how their <code>from_db</code> methods behave, including any differences between them.</p>
+<p>Here’s how <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a> works for each of the three Pydantic models, based on <a href="cci:7://file:///home/jelle/code/infoflow/infoflow/classdb.py:0:0-0:0">classdb.py</a>.</p>
+<hr>
+</section>
+<section id="tool.from_db" class="level2">
+<h2 class="anchored" data-anchor-id="tool.from_db">1. <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">Tool.from_db</a></h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="at">@classmethod</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> from_db(cls, db_record):</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    phase_quality <span class="op">=</span> PhaseQualityData(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>        collect<span class="op">=</span>PhaseQuality(db_record[<span class="st">'collect_quality'</span>]),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        retrieve<span class="op">=</span>PhaseQuality(db_record[<span class="st">'retrieve_quality'</span>]),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        consume<span class="op">=</span>PhaseQuality(db_record[<span class="st">'consume_quality'</span>]),</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        extract<span class="op">=</span>PhaseQuality(db_record[<span class="st">'extract_quality'</span>]),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        refine<span class="op">=</span>PhaseQuality(db_record[<span class="st">'refine_quality'</span>])</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    org_systems <span class="op">=</span> [OrganizationSystem(s) <span class="cf">for</span> s <span class="kw">in</span> json.loads(db_record[<span class="st">'organization_system'</span>])]</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cls(</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>        <span class="bu">id</span><span class="op">=</span>db_record[<span class="st">'id'</span>],</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>        name<span class="op">=</span>db_record[<span class="st">'name'</span>],</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>        description<span class="op">=</span>db_record.get(<span class="st">'description'</span>),</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>        organization_system<span class="op">=</span>org_systems,</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>        phase_quality<span class="op">=</span>phase_quality,</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>        collect<span class="op">=</span>db_record[<span class="st">'collect'</span>],</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>        retrieve<span class="op">=</span>db_record[<span class="st">'retrieve'</span>],</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>        consume<span class="op">=</span>db_record[<span class="st">'consume'</span>],</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>        extract<span class="op">=</span>db_record[<span class="st">'extract'</span>],</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>        refine<span class="op">=</span>db_record[<span class="st">'refine'</span>]</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Input</strong>: <code>db_record</code> is a row from the <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:110:8-126:31">Tools</a> table (e.g.&nbsp;a dict-like object from fastlite).</li>
+<li><strong>Rebuild <code>phase_quality</code></strong>:
+<ul>
+<li>DB stores each quality as a string (<code>'na' | 'bad' | 'ok' | 'great'</code>).</li>
+<li><a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:65:0-70:49">PhaseQualityData</a> is reconstructed by wrapping each DB value with the <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:50:0-55:19">PhaseQuality</a> enum.</li>
+</ul></li>
+<li><strong>Rebuild <code>organization_system</code></strong>:
+<ul>
+<li>DB stores it as a JSON string representing a list of enum values, e.g.&nbsp;<code>["tags","folders"]</code>.</li>
+<li><code>json.loads</code> turns that into a Python list of strings.</li>
+<li>Each string is turned into an <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:57:0-62:37">OrganizationSystem</a> enum instance.</li>
+</ul></li>
+<li><strong>Instantiate <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:72:0-133:316">Tool</a></strong>:
+<ul>
+<li>Pass all the primitive fields straight from <code>db_record</code>.</li>
+<li>Pass the reconstructed <code>phase_quality</code> and <code>organization_system</code>.</li>
+</ul></li>
+<li><strong>Side-effect</strong>:
+<ul>
+<li><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:99:4-101:47"><strong>init</strong></a> registers the instance in <code>Tool._instances</code> keyed by <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:87:4-90:45">slug</a>.</li>
+</ul></li>
+</ul>
+<p><strong>In short</strong>: <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a> converts DB‑friendly fields (JSON/string) back into enum-rich, structured Pydantic objects.</p>
+<hr>
+</section>
+<section id="informationitem.from_db-1" class="level2">
+<h2 class="anchored" data-anchor-id="informationitem.from_db-1">2. <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:225:4-235:117">InformationItem.from_db</a></h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="at">@classmethod</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> from_db(cls, db_record):</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    toolflow <span class="op">=</span> PhaseToolflowData(</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>        collect<span class="op">=</span>cls._parse_toolflow(db_record[<span class="st">'collect_toolflow'</span>]),</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>        retrieve<span class="op">=</span>cls._parse_toolflow(db_record[<span class="st">'retrieve_toolflow'</span>]),</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>        consume<span class="op">=</span>cls._parse_toolflow(db_record[<span class="st">'consume_toolflow'</span>]),</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>        extract<span class="op">=</span>cls._parse_toolflow(db_record[<span class="st">'extract_toolflow'</span>]),</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>        refine<span class="op">=</span>cls._parse_toolflow(db_record[<span class="st">'refine_toolflow'</span>])</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    method <span class="op">=</span> PhaseMethodData(</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>        collect<span class="op">=</span>db_record[<span class="st">'collect_method'</span>],</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>        retrieve<span class="op">=</span>db_record[<span class="st">'retrieve_method'</span>],</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>        consume<span class="op">=</span>db_record[<span class="st">'consume_method'</span>],</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>        extract<span class="op">=</span>db_record[<span class="st">'extract_method'</span>],</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>        refine<span class="op">=</span>db_record[<span class="st">'refine_method'</span>]</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    info_type <span class="op">=</span> InformationType(db_record[<span class="st">'info_type'</span>])</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cls(</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>        <span class="bu">id</span><span class="op">=</span>db_record[<span class="st">'id'</span>],</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>        name<span class="op">=</span>db_record[<span class="st">'name'</span>],</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>        info_type<span class="op">=</span>info_type,</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>        method<span class="op">=</span>method,</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>        toolflow<span class="op">=</span>toolflow</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The helper:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="at">@staticmethod</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _parse_toolflow(v):</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> v <span class="kw">is</span> <span class="va">None</span>: <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(v, <span class="bu">str</span>) <span class="kw">and</span> v.startswith(<span class="st">'['</span>): <span class="cf">return</span> json.loads(v)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Input</strong>: a row from <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:196:8-211:32">InformationItems</a>.</li>
+<li><strong>Rebuild <code>toolflow</code></strong>:
+<ul>
+<li>DB stores each <code>*_toolflow</code> as either:
+<ul>
+<li><code>NULL</code>/<code>None</code>,</li>
+<li>a plain string (single tool),</li>
+<li>or a JSON-encoded list (multiple tools).</li>
+</ul></li>
+<li><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:218:4-223:16">_parse_toolflow</a>:
+<ul>
+<li>returns <code>None</code> for <code>None</code>,</li>
+<li><code>json.loads</code> if it looks like a JSON list (starts with <code>'['</code>),</li>
+<li>otherwise leaves the string as‑is.</li>
+</ul></li>
+<li>Those values feed into <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:144:0-159:40">PhaseToolflowData</a> (which itself sanitizes names via validators).</li>
+</ul></li>
+<li><strong>Rebuild <code>method</code></strong>:
+<ul>
+<li>Note: DB stores method values as strings (<code>"manual"</code>, <code>"automatic"</code>, <code>"na"</code> or <code>None</code>).</li>
+<li><a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:136:0-141:47">PhaseMethodData</a> fields are annotated as <code>Method | None</code>, so Pydantic will convert those strings to <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:36:0-40:27">Method</a> enums automatically.</li>
+</ul></li>
+<li><strong>Rebuild <code>info_type</code></strong>:
+<ul>
+<li>DB stores <code>info_type</code> as its string value (e.g.&nbsp;<code>"book"</code>).</li>
+<li>This is wrapped into <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:21:0-34:33">InformationType</a>.</li>
+</ul></li>
+<li><strong>Instantiate <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:163:0-235:117">InformationItem</a></strong>:
+<ul>
+<li>Pass the reconstructed <code>info_type</code>, <code>method</code>, <code>toolflow</code>, plus <code>id</code> and <code>name</code>.</li>
+<li><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:99:4-101:47"><strong>init</strong></a> adds the instance to <code>InformationItem._instances</code>.</li>
+</ul></li>
+</ul>
+<p><strong>In short</strong>: <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a> reverses the flattening that turned nested structures (<a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:136:0-141:47">PhaseMethodData</a>, <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:144:0-159:40">PhaseToolflowData</a>, <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:21:0-34:33">InformationType</a>) into many DB columns + JSON strings.</p>
+<hr>
+</section>
+<section id="improvement.from_db-1" class="level2">
+<h2 class="anchored" data-anchor-id="improvement.from_db-1">3. <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:295:4-298:171">Improvement.from_db</a></h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="at">@classmethod</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> from_db(cls, db_record):</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    phase <span class="op">=</span> Phase(db_record[<span class="st">'phase'</span>])</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cls(</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">id</span><span class="op">=</span>db_record[<span class="st">'id'</span>],</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span>db_record[<span class="st">'title'</span>],</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>        what<span class="op">=</span>db_record[<span class="st">'what'</span>],</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>        why<span class="op">=</span>db_record[<span class="st">'why'</span>],</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>        prio<span class="op">=</span>db_record[<span class="st">'prio'</span>],</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>        tool<span class="op">=</span>db_record[<span class="st">'tool'</span>],</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>        phase<span class="op">=</span>phase</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Input</strong>: a row from <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:272:8-282:21">Improvements</a>.</li>
+<li><strong>Rebuild <code>phase</code></strong>:
+<ul>
+<li>DB stores <code>phase</code> as a string (e.g.&nbsp;<code>"collect"</code>).</li>
+<li>Wrap in the <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:42:0-48:21">Phase</a> enum.</li>
+</ul></li>
+<li><strong>Instantiate <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:238:0-298:171">Improvement</a></strong>:
+<ul>
+<li>All other fields are passed through as-is.</li>
+<li><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:99:4-101:47"><strong>init</strong></a> registers in <code>Improvement._instances</code>.</li>
+<li><code>tool</code> will be validated against <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:103:4-105:29">Tool.get_instances()</a> by the <code>field_validator</code>, so this will raise if the referenced tool slug is unknown.</li>
+</ul></li>
+</ul>
+<p><strong>In short</strong>: <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a> here is simpler: it only converts the stored phase string to a <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:42:0-48:21">Phase</a> enum and lets Pydantic + validators do the rest.</p>
+<hr>
+</section>
+<section id="conceptual-pattern-across-all-three-1" class="level2">
+<h2 class="anchored" data-anchor-id="conceptual-pattern-across-all-three-1">Conceptual pattern across all three</h2>
+<ul>
+<li><strong>DB schema is “flattened”</strong>:
+<ul>
+<li>Enums → strings.</li>
+<li>Lists/tuples → JSON text.</li>
+<li>Nested models → multiple columns.</li>
+</ul></li>
+<li><strong><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:92:4-95:19">flatten_for_db</a></strong> does the forward conversion to DB‑friendly fields.</li>
+<li><strong><a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a></strong> does the reverse: rehydrate Enums, nested Pydantic models, and collections from that DB representation, returning fully-typed domain models ready for use in the app.</li>
+</ul>
+<p>If you want, I can also trace one concrete row (e.g.&nbsp;a <a href="cci:2://file:///home/jelle/code/infoflow/infoflow/classdb.py:72:0-133:316">Tool</a> with multiple <code>organization_system</code> values) through <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:92:4-95:19">flatten_for_db</a> → SQLite row → <a href="cci:1://file:///home/jelle/code/infoflow/infoflow/classdb.py:129:4-133:316">from_db</a> for a more step-by-step example.</p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L77" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="phasequalitydata" class="level3">
+<h3 class="anchored" data-anchor-id="phasequalitydata">PhaseQualityData</h3>
+<blockquote class="blockquote">
+<pre><code> PhaseQualityData (collect:__main__.PhaseQuality=&lt;PhaseQuality.NA: 'na'&gt;,
+                   retrieve:__main__.PhaseQuality=&lt;PhaseQuality.NA: 'na'&gt;,
+                   consume:__main__.PhaseQuality=&lt;PhaseQuality.NA: 'na'&gt;,
+                   extract:__main__.PhaseQuality=&lt;PhaseQuality.NA: 'na'&gt;,
+                   refine:__main__.PhaseQuality=&lt;PhaseQuality.NA: 'na'&gt;)</code></pre>
+</blockquote>
+<p>*!!! abstract “Usage Documentation” <a href="../concepts/models.md">Models</a></p>
+<p>A base class for creating Pydantic models.</p>
+<p>Attributes: <strong>class_vars</strong>: The names of the class variables defined on the model. <strong>private_attributes</strong>: Metadata about the private attributes of the model. <strong>signature</strong>: The synthesized <code>__init__</code> [<code>Signature</code>][inspect.Signature] of the model.</p>
+<pre><code>__pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+__pydantic_core_schema__: The core schema of the model.
+__pydantic_custom_init__: Whether the model has a custom `__init__` function.
+__pydantic_decorators__: Metadata containing the decorators defined on the model.
+    This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+__pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+    __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+__pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+__pydantic_post_init__: The name of the post-init method for the model, if defined.
+__pydantic_root_model__: Whether the model is a [`RootModel`][pydantic.root_model.RootModel].
+__pydantic_serializer__: The `pydantic-core` `SchemaSerializer` used to dump instances of the model.
+__pydantic_validator__: The `pydantic-core` `SchemaValidator` used to validate instances of the model.
+
+__pydantic_fields__: A dictionary of field names and their corresponding [`FieldInfo`][pydantic.fields.FieldInfo] objects.
+__pydantic_computed_fields__: A dictionary of computed field names and their corresponding [`ComputedFieldInfo`][pydantic.fields.ComputedFieldInfo] objects.
+
+__pydantic_extra__: A dictionary containing extra values, if [`extra`][pydantic.config.ConfigDict.extra]
+    is set to `'allow'`.
+__pydantic_fields_set__: The names of fields explicitly set during instantiation.
+__pydantic_private__: Values of private attributes set on the model instance.*</code></pre>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L86" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="tool" class="level3">
+<h3 class="anchored" data-anchor-id="tool">Tool</h3>
+<blockquote class="blockquote">
+<pre><code> Tool (id:int|None=None, name:str, description:str|None=None,
+       organization_system:list[__main__.OrganizationSystem],
+       phase_quality:__main__.PhaseQualityData, collect:str|None=None,
+       retrieve:str|None=None, consume:str|None=None,
+       extract:str|None=None, refine:str|None=None)</code></pre>
+</blockquote>
+<p><em>Pydantic dataclass for tools. This Pydantic dataclass has several methods for converting to and from a SQLite database. This is needed because SQLite doesn’t support all used data types. !IMPORTANT: be sure to add or change the appropriate methods when adding or changing fields!</em></p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L157" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="phasemethoddata" class="level3">
+<h3 class="anchored" data-anchor-id="phasemethoddata">PhaseMethodData</h3>
+<blockquote class="blockquote">
+<pre><code> PhaseMethodData (collect:__main__.Method|None=None,
+                  retrieve:__main__.Method|None=None,
+                  consume:__main__.Method|None=None,
+                  extract:__main__.Method|None=None,
+                  refine:__main__.Method|None=None)</code></pre>
+</blockquote>
+<p>*!!! abstract “Usage Documentation” <a href="../concepts/models.md">Models</a></p>
+<p>A base class for creating Pydantic models.</p>
+<p>Attributes: <strong>class_vars</strong>: The names of the class variables defined on the model. <strong>private_attributes</strong>: Metadata about the private attributes of the model. <strong>signature</strong>: The synthesized <code>__init__</code> [<code>Signature</code>][inspect.Signature] of the model.</p>
+<pre><code>__pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+__pydantic_core_schema__: The core schema of the model.
+__pydantic_custom_init__: Whether the model has a custom `__init__` function.
+__pydantic_decorators__: Metadata containing the decorators defined on the model.
+    This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+__pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+    __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+__pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+__pydantic_post_init__: The name of the post-init method for the model, if defined.
+__pydantic_root_model__: Whether the model is a [`RootModel`][pydantic.root_model.RootModel].
+__pydantic_serializer__: The `pydantic-core` `SchemaSerializer` used to dump instances of the model.
+__pydantic_validator__: The `pydantic-core` `SchemaValidator` used to validate instances of the model.
+
+__pydantic_fields__: A dictionary of field names and their corresponding [`FieldInfo`][pydantic.fields.FieldInfo] objects.
+__pydantic_computed_fields__: A dictionary of computed field names and their corresponding [`ComputedFieldInfo`][pydantic.fields.ComputedFieldInfo] objects.
+
+__pydantic_extra__: A dictionary containing extra values, if [`extra`][pydantic.config.ConfigDict.extra]
+    is set to `'allow'`.
+__pydantic_fields_set__: The names of fields explicitly set during instantiation.
+__pydantic_private__: Values of private attributes set on the model instance.*</code></pre>
+<p>Since <code>Pydantic</code> v2 Pydantic coerces sequences to tuples with a type of <code>tuple[str, ...]</code> Pydantic will accept a <code>list[str, ...]</code> as a valid input. Therefore we must include both <code>tuple</code> and <code>list</code> as a valid instance int the staticmethod <code>_san</code>. Else the validation will return <code>None</code> if a list is passed which is bad. It should return a <code>TypeError</code> to inform the user to use a tuple or it should just return the values as a tuple. The function <code>_san</code> now returns a tuple of strings if a list is passed.</p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L165" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="phasetoolflowdata" class="level3">
+<h3 class="anchored" data-anchor-id="phasetoolflowdata">PhaseToolflowData</h3>
+<blockquote class="blockquote">
+<pre><code> PhaseToolflowData (collect:Union[str,tuple[str,...],NoneType]=None,
+                    retrieve:Union[str,tuple[str,...],NoneType]=None,
+                    consume:Union[str,tuple[str,...],NoneType]=None,
+                    extract:Union[str,tuple[str,...],NoneType]=None,
+                    refine:Union[str,tuple[str,...],NoneType]=None)</code></pre>
+</blockquote>
+<p>*!!! abstract “Usage Documentation” <a href="../concepts/models.md">Models</a></p>
+<p>A base class for creating Pydantic models.</p>
+<p>Attributes: <strong>class_vars</strong>: The names of the class variables defined on the model. <strong>private_attributes</strong>: Metadata about the private attributes of the model. <strong>signature</strong>: The synthesized <code>__init__</code> [<code>Signature</code>][inspect.Signature] of the model.</p>
+<pre><code>__pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+__pydantic_core_schema__: The core schema of the model.
+__pydantic_custom_init__: Whether the model has a custom `__init__` function.
+__pydantic_decorators__: Metadata containing the decorators defined on the model.
+    This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+__pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+    __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+__pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+__pydantic_post_init__: The name of the post-init method for the model, if defined.
+__pydantic_root_model__: Whether the model is a [`RootModel`][pydantic.root_model.RootModel].
+__pydantic_serializer__: The `pydantic-core` `SchemaSerializer` used to dump instances of the model.
+__pydantic_validator__: The `pydantic-core` `SchemaValidator` used to validate instances of the model.
+
+__pydantic_fields__: A dictionary of field names and their corresponding [`FieldInfo`][pydantic.fields.FieldInfo] objects.
+__pydantic_computed_fields__: A dictionary of computed field names and their corresponding [`ComputedFieldInfo`][pydantic.fields.ComputedFieldInfo] objects.
+
+__pydantic_extra__: A dictionary containing extra values, if [`extra`][pydantic.config.ConfigDict.extra]
+    is set to `'allow'`.
+__pydantic_fields_set__: The names of fields explicitly set during instantiation.
+__pydantic_private__: Values of private attributes set on the model instance.*</code></pre>
+<p>Example of creating an instance from <a href="https://Hopsakee.github.io/infoflow/classes_db.html#phasetoolflowdata"><code>PhaseToolflowData</code></a> with all possible types of input: <code>str</code>, <code>list[str]</code>, <code>tuple[str]</code> and just skipping an entry to return <code>None</code>.</p>
+<div id="cell-26" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>PhaseToolflowData(collect<span class="op">=</span>[<span class="st">"Reader"</span>, <span class="st">"Recall"</span>], retrieve<span class="op">=</span><span class="st">"Recall"</span>, refine<span class="op">=</span>(<span class="st">"Obsidian"</span>, <span class="st">"Recall"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>PhaseToolflowData(collect=('reader', 'recall'), retrieve='recall', consume=None, extract=None, refine=('obsidian', 'recall'))</code></pre>
+</div>
+</div>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L184" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="informationitem" class="level3">
+<h3 class="anchored" data-anchor-id="informationitem">InformationItem</h3>
+<blockquote class="blockquote">
+<pre><code> InformationItem (id:int|None=None, name:str,
+                  info_type:__main__.InformationType,
+                  method:__main__.PhaseMethodData,
+                  toolflow:__main__.PhaseToolflowData)</code></pre>
+</blockquote>
+<p><em>Pydantic dataclass for information items. This Pydantic dataclass has several methods for converting to and from a SQLite database. This is needed because SQLite doesn’t support all used data types. !IMPORTANT: be sure to add or change the appropriate methods when adding or changing fields!</em></p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L270" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="improvement" class="level3">
+<h3 class="anchored" data-anchor-id="improvement">Improvement</h3>
+<blockquote class="blockquote">
+<pre><code> Improvement (id:int|None=None, name:str, what:str, why:str, how:str,
+              prio:int, tool:str, phase:__main__.Phase)</code></pre>
+</blockquote>
+<p><em>Pydantic dataclass for improvements. This Pydantic dataclass has several methods for converting to and from a SQLite database. This is needed because SQLite doesn’t support all used data types. !IMPORTANT: be sure to add or change the appropriate methods when adding or changing fields!</em></p>
+<p>Test creating instances</p>
+<div id="cell-30" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_phase_quality_data():</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    pqd <span class="op">=</span> PhaseQualityData(collect<span class="op">=</span>PhaseQuality.GREAT, retrieve<span class="op">=</span>PhaseQuality.BAD, consume<span class="op">=</span>PhaseQuality.OK, extract<span class="op">=</span>PhaseQuality.NA, refine<span class="op">=</span>PhaseQuality.GREAT)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    test_eq(pqd.collect, PhaseQuality.GREAT)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    test_eq(pqd.retrieve, PhaseQuality.BAD)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_tool_creation():</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    tool <span class="op">=</span> Tool(<span class="bu">id</span><span class="op">=</span><span class="dv">12</span>, name<span class="op">=</span><span class="st">"TestTool"</span>, organization_system<span class="op">=</span>[OrganizationSystem.TAGS], phase_quality<span class="op">=</span>PhaseQualityData(collect<span class="op">=</span>PhaseQuality.GREAT, retrieve<span class="op">=</span>PhaseQuality.BAD, consume<span class="op">=</span>PhaseQuality.OK, extract<span class="op">=</span>PhaseQuality.NA, refine<span class="op">=</span>PhaseQuality.GREAT))</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    test_eq(tool.name, <span class="st">"TestTool"</span>)</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    test_eq(tool.slug, <span class="st">"testtool"</span>)</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    test_eq(tool.phase_quality.collect, PhaseQuality.GREAT)</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> tool</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_tool_flatten():</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    tool <span class="op">=</span> Tool(<span class="bu">id</span><span class="op">=</span><span class="dv">12</span>, name<span class="op">=</span><span class="st">"TestTool"</span>, organization_system<span class="op">=</span>[OrganizationSystem.TAGS, OrganizationSystem.FOLDERS], phase_quality<span class="op">=</span>PhaseQualityData(collect<span class="op">=</span>PhaseQuality.GREAT, retrieve<span class="op">=</span>PhaseQuality.BAD, consume<span class="op">=</span>PhaseQuality.OK, extract<span class="op">=</span>PhaseQuality.NA, refine<span class="op">=</span>PhaseQuality.GREAT))</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>    flat <span class="op">=</span> tool.flatten_for_db()</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>    test_eq(flat[<span class="st">'collect_quality'</span>], <span class="st">'great'</span>)</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>    test_eq(flat[<span class="st">'retrieve_quality'</span>], <span class="st">'bad'</span>)</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>    test_eq(flat[<span class="st">'name'</span>], <span class="st">'TestTool'</span>)</span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_information_item():</span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>    methods <span class="op">=</span> PhaseMethodData(collect<span class="op">=</span>Method.MANUAL, retrieve<span class="op">=</span><span class="va">None</span>, consume<span class="op">=</span><span class="va">None</span>, extract<span class="op">=</span><span class="va">None</span>, refine<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>    tools <span class="op">=</span> PhaseToolflowData(collect<span class="op">=</span><span class="st">"Reader"</span>, retrieve<span class="op">=</span>(<span class="st">"Recall"</span>, <span class="st">"Reader"</span>), consume<span class="op">=</span><span class="va">None</span>, extract<span class="op">=</span><span class="va">None</span>, refine<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>    item <span class="op">=</span> InformationItem(<span class="bu">id</span><span class="op">=</span><span class="dv">16</span>, name<span class="op">=</span><span class="st">"Test Article"</span>, info_type<span class="op">=</span>InformationType.WEB_ARTICLE, method<span class="op">=</span>methods, toolflow<span class="op">=</span>tools)</span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>    test_eq(item.method.collect, Method.MANUAL)</span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>    test_eq(item.toolflow.collect, <span class="st">"reader"</span>)</span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>    test_eq(item.toolflow.retrieve, (<span class="st">"recall"</span>, <span class="st">"reader"</span>))</span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> item</span>
+<span id="cb29-28"><a href="#cb29-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-29"><a href="#cb29-29" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_information_item_flatten():</span>
+<span id="cb29-30"><a href="#cb29-30" aria-hidden="true" tabindex="-1"></a>    methods <span class="op">=</span> PhaseMethodData(collect<span class="op">=</span>Method.MANUAL, retrieve<span class="op">=</span><span class="va">None</span>, consume<span class="op">=</span><span class="va">None</span>, extract<span class="op">=</span><span class="va">None</span>, refine<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb29-31"><a href="#cb29-31" aria-hidden="true" tabindex="-1"></a>    tools <span class="op">=</span> PhaseToolflowData(collect<span class="op">=</span>(<span class="st">"Reader"</span>, <span class="st">"Recall"</span>), retrieve<span class="op">=</span><span class="st">"Recall"</span>, consume<span class="op">=</span><span class="va">None</span>, extract<span class="op">=</span><span class="va">None</span>, refine<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb29-32"><a href="#cb29-32" aria-hidden="true" tabindex="-1"></a>    item <span class="op">=</span> InformationItem(<span class="bu">id</span><span class="op">=</span><span class="dv">16</span>,name<span class="op">=</span><span class="st">"Test Article"</span>, info_type<span class="op">=</span>InformationType.WEB_ARTICLE, method<span class="op">=</span>methods, toolflow<span class="op">=</span>tools)</span>
+<span id="cb29-33"><a href="#cb29-33" aria-hidden="true" tabindex="-1"></a>    flat <span class="op">=</span> item.flatten_for_db()</span>
+<span id="cb29-34"><a href="#cb29-34" aria-hidden="true" tabindex="-1"></a>    test_eq(flat[<span class="st">'collect_method'</span>], <span class="st">'manual'</span>)</span>
+<span id="cb29-35"><a href="#cb29-35" aria-hidden="true" tabindex="-1"></a>    test_eq(flat[<span class="st">'retrieve_method'</span>], <span class="va">None</span>)</span>
+<span id="cb29-36"><a href="#cb29-36" aria-hidden="true" tabindex="-1"></a>    test_eq(flat[<span class="st">'collect_toolflow'</span>], <span class="st">'["reader", "recall"]'</span>)</span>
+<span id="cb29-37"><a href="#cb29-37" aria-hidden="true" tabindex="-1"></a>    test_eq(flat[<span class="st">'retrieve_toolflow'</span>], <span class="st">'recall'</span>)</span>
+<span id="cb29-38"><a href="#cb29-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-39"><a href="#cb29-39" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_improvement():</span>
+<span id="cb29-40"><a href="#cb29-40" aria-hidden="true" tabindex="-1"></a>    imp <span class="op">=</span> Improvement(<span class="bu">id</span><span class="op">=</span><span class="dv">18</span>, name<span class="op">=</span><span class="st">"Fix Search"</span>, what<span class="op">=</span><span class="st">"Better search in Reader"</span>, why<span class="op">=</span><span class="st">"Current search is bad"</span>, how<span class="op">=</span><span class="st">"By thinking for yoursel"</span>, prio<span class="op">=</span><span class="dv">1</span>, tool<span class="op">=</span><span class="st">"testtool"</span>, phase<span class="op">=</span>Phase.RETRIEVE)</span>
+<span id="cb29-41"><a href="#cb29-41" aria-hidden="true" tabindex="-1"></a>    test_eq(imp.name, <span class="st">"Fix Search"</span>)</span>
+<span id="cb29-42"><a href="#cb29-42" aria-hidden="true" tabindex="-1"></a>    test_eq(imp.phase, Phase.RETRIEVE)</span>
+<span id="cb29-43"><a href="#cb29-43" aria-hidden="true" tabindex="-1"></a>    test_eq(imp.flatten_for_db()[<span class="st">'phase'</span>], <span class="st">'retrieve'</span>)</span>
+<span id="cb29-44"><a href="#cb29-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> imp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-31" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>OrganizationSystem(<span class="st">"tags"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>&lt;OrganizationSystem.TAGS: 'tags'&gt;</code></pre>
+</div>
+</div>
+<div id="cell-32" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>OrganizationSystem.FOLDERS</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>&lt;OrganizationSystem.FOLDERS: 'folders'&gt;</code></pre>
+</div>
+</div>
+<div id="cell-33" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>test_phase_quality_data()</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>test_tool_creation()</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>test_tool_flatten()</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>test_information_item()</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>test_information_item_flatten()</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>test_improvement()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>Improvement(id=18, name='Fix Search', what='Better search in Reader', why='Current search is bad', how='By thinking for yoursel', prio=1, tool='testtool', phase=&lt;Phase.RETRIEVE: 'retrieve'&gt;, slug='fix_search')</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="sqlite-database" class="level2">
+<h2 class="anchored" data-anchor-id="sqlite-database">SQLite database</h2>
+<section id="create-and-connect" class="level4">
+<h4 class="anchored" data-anchor-id="create-and-connect">Create and connect</h4>
+<p>Connect to the database in the <code>main.py</code>. We should also enable foreign key constraints. These are disabled by default in Sqlite.</p>
+<p>For testing purposes in this module we will use <code>db = database(":memory:")</code> to create an in-memory database.</p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L337" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="create_db" class="level3">
+<h3 class="anchored" data-anchor-id="create_db">create_db</h3>
+<blockquote class="blockquote">
+<pre><code> create_db (loc:str='../data/infoflow.db')</code></pre>
+</blockquote>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Default</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>loc</td>
+<td>str</td>
+<td>../data/infoflow.db</td>
+<td>Location of the SQLite database</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>Database</strong></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>We can add foreign key constraints to the tables using the <code>transform</code> method from <code>sqlite_utils</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>inf_tbl.transform(add_foreign_keys<span class="op">=</span>[(<span class="st">"&lt;field_name&gt;"</span>, <span class="st">"&lt;table_name_to_connect&gt;"</span>, <span class="st">"&lt;field_name_in_table_to_connect&gt;"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<p>But for now we won’t use foreign key constraints.</p>
+<p>We can create the tables using the function <a href="https://Hopsakee.github.io/infoflow/classes_db.html#create_tables_from_pydantic"><code>create_tables_from_pydantic</code></a> but we won’t be using it. The tables will be created automatically when we insert the first item for each table.</p>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L345" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="create_tables_from_pydantic" class="level3">
+<h3 class="anchored" data-anchor-id="create_tables_from_pydantic">create_tables_from_pydantic</h3>
+<blockquote class="blockquote">
+<pre><code> create_tables_from_pydantic (db:apswutils.db.Database,
+                              classes:List[pydantic.main.BaseModel])</code></pre>
+</blockquote>
+<p>Tests and usage examples</p>
+<div id="cell-42" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>db <span class="op">=</span> create_db(<span class="st">":memory:"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-43" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>create_tables_from_pydantic(db, [Tool, InformationItem, Improvement])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-44" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>db.t</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>improvements, information_items, tools</code></pre>
+</div>
+</div>
+<div id="cell-45" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>db.t.improvements.c</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>how, id, name, phase, prio, slug, tool, what, why</code></pre>
+</div>
+</div>
+<p>Testing of manipulating database by adding a “something” field to the Improvement dataclass.</p>
+<div id="cell-47" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>Improvement.get_instances()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'fix_search': Improvement(id=18, name='Fix Search', what='Better search in Reader', why='Current search is bad', how='By thinking for yoursel', prio=1, tool='testtool', phase=&lt;Phase.RETRIEVE: 'retrieve'&gt;, slug='fix_search')}</code></pre>
+</div>
+</div>
+<div id="cell-48" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>db.t.improvements.insert(test_improvement().flatten_for_db())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'id': 18,
+ 'name': 'Fix Search',
+ 'what': 'Better search in Reader',
+ 'why': 'Current search is bad',
+ 'how': 'By thinking for yoursel',
+ 'prio': 1,
+ 'tool': 'testtool',
+ 'phase': 'retrieve',
+ 'slug': 'fix_search'}</code></pre>
+</div>
+</div>
+<div id="cell-49" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>Improvement.get_instances()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'fix_search': Improvement(id=18, name='Fix Search', what='Better search in Reader', why='Current search is bad', how='By thinking for yoursel', prio=1, tool='testtool', phase=&lt;Phase.RETRIEVE: 'retrieve'&gt;, slug='fix_search')}</code></pre>
+</div>
+</div>
+<div id="cell-50" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>before_cols <span class="op">=</span> [c.name <span class="cf">for</span> c <span class="kw">in</span> L(db.t.improvements.c)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-51" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Improvement(SluggedModel):</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Pydantic dataclass for improvements. This Pydantic dataclass has several methods for converting to and from a </span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a><span class="co">    SQLite database. This is needed because SQLite doesn't support all used data types.</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="co">    !IMPORTANT: be sure to add or change the appropriate methods when adding or changing fields!"""</span></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span>: <span class="bu">int</span> <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> Field(default<span class="op">=</span><span class="va">None</span>, description<span class="op">=</span><span class="st">"ID of the improvement, is automatically created when inserted in db."</span>)</span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>    name: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"Title of the improvement"</span>)</span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>    what: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"What needs to be improved"</span>)</span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>    why: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"Why is this improvement needed"</span>)</span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>    how: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"Some ideas how to build this improvement"</span>)</span>
+<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>    prio: <span class="bu">int</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"Priority of the improvement. Lowest number is highest priority"</span>)</span>
+<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>    tool: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"slug of the Tool that needs improvement"</span>)</span>
+<span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a>    something: <span class="bu">str</span> <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"Something"</span>)</span>
+<span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a>    phase: Phase <span class="op">=</span> Field(..., description<span class="op">=</span><span class="st">"Phase that needs improvement"</span>)</span>
+<span id="cb52-14"><a href="#cb52-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-15"><a href="#cb52-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, <span class="op">**</span>data):</span>
+<span id="cb52-16"><a href="#cb52-16" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">**</span>data)</span>
+<span id="cb52-17"><a href="#cb52-17" aria-hidden="true" tabindex="-1"></a>        <span class="bu">type</span>(<span class="va">self</span>)._instances[<span class="va">self</span>.slug] <span class="op">=</span> <span class="va">self</span></span>
+<span id="cb52-18"><a href="#cb52-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-19"><a href="#cb52-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">@classmethod</span></span>
+<span id="cb52-20"><a href="#cb52-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> get_instances(cls) <span class="op">-&gt;</span> Dict[<span class="bu">str</span>, <span class="st">"Improvement"</span>]:</span>
+<span id="cb52-21"><a href="#cb52-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> cls._instances</span>
+<span id="cb52-22"><a href="#cb52-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-23"><a href="#cb52-23" aria-hidden="true" tabindex="-1"></a>    _instances: ClassVar[Dict[<span class="bu">str</span>, <span class="st">"Improvement"</span>]] <span class="op">=</span> {}</span>
+<span id="cb52-24"><a href="#cb52-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-25"><a href="#cb52-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> flatten_for_db(<span class="va">self</span>):</span>
+<span id="cb52-26"><a href="#cb52-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.model_dump()</span>
+<span id="cb52-27"><a href="#cb52-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-28"><a href="#cb52-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">@classmethod</span></span>
+<span id="cb52-29"><a href="#cb52-29" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> get_db_schema(cls):</span>
+<span id="cb52-30"><a href="#cb52-30" aria-hidden="true" tabindex="-1"></a>        <span class="co">"""Returns a dataclass with SQLite-compatible field types."""</span></span>
+<span id="cb52-31"><a href="#cb52-31" aria-hidden="true" tabindex="-1"></a>        <span class="at">@dataclass</span></span>
+<span id="cb52-32"><a href="#cb52-32" aria-hidden="true" tabindex="-1"></a>        <span class="kw">class</span> Improvements: <span class="co"># Class name is used as table name automatically</span></span>
+<span id="cb52-33"><a href="#cb52-33" aria-hidden="true" tabindex="-1"></a>            <span class="bu">id</span>: <span class="bu">int</span></span>
+<span id="cb52-34"><a href="#cb52-34" aria-hidden="true" tabindex="-1"></a>            name: <span class="bu">str</span></span>
+<span id="cb52-35"><a href="#cb52-35" aria-hidden="true" tabindex="-1"></a>            what: <span class="bu">str</span></span>
+<span id="cb52-36"><a href="#cb52-36" aria-hidden="true" tabindex="-1"></a>            why: <span class="bu">str</span></span>
+<span id="cb52-37"><a href="#cb52-37" aria-hidden="true" tabindex="-1"></a>            how: <span class="bu">str</span></span>
+<span id="cb52-38"><a href="#cb52-38" aria-hidden="true" tabindex="-1"></a>            prio: <span class="bu">int</span></span>
+<span id="cb52-39"><a href="#cb52-39" aria-hidden="true" tabindex="-1"></a>            tool: <span class="bu">str</span></span>
+<span id="cb52-40"><a href="#cb52-40" aria-hidden="true" tabindex="-1"></a>            something: <span class="bu">str</span></span>
+<span id="cb52-41"><a href="#cb52-41" aria-hidden="true" tabindex="-1"></a>            phase: <span class="bu">str</span></span>
+<span id="cb52-42"><a href="#cb52-42" aria-hidden="true" tabindex="-1"></a>            slug: <span class="bu">str</span></span>
+<span id="cb52-43"><a href="#cb52-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Improvements</span>
+<span id="cb52-44"><a href="#cb52-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-45"><a href="#cb52-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">@field_serializer</span>(<span class="st">'phase'</span>)</span>
+<span id="cb52-46"><a href="#cb52-46" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> db_serialize(<span class="va">self</span>, v):</span>
+<span id="cb52-47"><a href="#cb52-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> v.value</span>
+<span id="cb52-48"><a href="#cb52-48" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb52-49"><a href="#cb52-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">@field_validator</span>(<span class="st">'tool'</span>)</span>
+<span id="cb52-50"><a href="#cb52-50" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> validate_tool_names(cls, v):</span>
+<span id="cb52-51"><a href="#cb52-51" aria-hidden="true" tabindex="-1"></a>        valid_tools <span class="op">=</span> Tool.get_instances().keys()</span>
+<span id="cb52-52"><a href="#cb52-52" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> v <span class="kw">not</span> <span class="kw">in</span> valid_tools: <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"Tool '</span><span class="sc">{</span>v<span class="sc">}</span><span class="ss">' does not exist"</span>)</span>
+<span id="cb52-53"><a href="#cb52-53" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> v</span>
+<span id="cb52-54"><a href="#cb52-54" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb52-55"><a href="#cb52-55" aria-hidden="true" tabindex="-1"></a>    <span class="at">@classmethod</span></span>
+<span id="cb52-56"><a href="#cb52-56" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> from_db(cls, db_record):</span>
+<span id="cb52-57"><a href="#cb52-57" aria-hidden="true" tabindex="-1"></a>        phase <span class="op">=</span> Phase(db_record[<span class="st">'phase'</span>])</span>
+<span id="cb52-58"><a href="#cb52-58" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> cls(<span class="bu">id</span><span class="op">=</span>db_record[<span class="st">'id'</span>], name<span class="op">=</span>db_record[<span class="st">'name'</span>], what<span class="op">=</span>db_record[<span class="st">'what'</span>], why<span class="op">=</span>db_record[<span class="st">'why'</span>], prio<span class="op">=</span>db_record[<span class="st">'prio'</span>], tool<span class="op">=</span>db_record[<span class="st">'tool'</span>], phase<span class="op">=</span>phase)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-52" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_improvement_newschema():</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>    imp <span class="op">=</span> Improvement(<span class="bu">id</span><span class="op">=</span><span class="dv">20</span>, name<span class="op">=</span><span class="st">"Fix Search again"</span>, what<span class="op">=</span><span class="st">"Better search in Reader"</span>, why<span class="op">=</span><span class="st">"Current search is bad"</span>, how<span class="op">=</span><span class="st">"By thinking for yoursel"</span>, prio<span class="op">=</span><span class="dv">1</span>, tool<span class="op">=</span><span class="st">"testtool"</span>, something<span class="op">=</span><span class="st">"omnious"</span>, phase<span class="op">=</span>Phase.RETRIEVE)</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>    test_eq(imp.name, <span class="st">"Fix Search again"</span>)</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>    test_eq(imp.phase, Phase.RETRIEVE)</span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>    test_eq(imp.flatten_for_db()[<span class="st">'phase'</span>], <span class="st">'retrieve'</span>)</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> imp</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>test_improvement_newschema()</span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>Improvement.get_instances()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'fix_search_again': Improvement(id=20, name='Fix Search again', what='Better search in Reader', why='Current search is bad', how='By thinking for yoursel', prio=1, tool='testtool', something='omnious', phase=&lt;Phase.RETRIEVE: 'retrieve'&gt;, slug='fix_search_again')}</code></pre>
+</div>
+</div>
+<div id="cell-53" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>create_tables_from_pydantic(db, [Improvement])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-54" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>after_cols <span class="op">=</span> [c.name <span class="cf">for</span> c <span class="kw">in</span> L(db.t.improvements.c)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-55" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> before_cols <span class="op">==</span> after_cols:</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"Improvements table conversion does not work correctly."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Check if data is still in database</p>
+<div id="cell-57" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>db.t.improvements[<span class="st">'18'</span>].name</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'Fix Search'</code></pre>
+</div>
+</div>
+<div id="cell-58" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>test_eq(db.t.improvements[<span class="st">'18'</span>].name, <span class="st">"Fix Search"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="add-data-to-the-database" class="level4">
+<h4 class="anchored" data-anchor-id="add-data-to-the-database">Add data to the database</h4>
+<p>Add the created instances to the SQLite tables</p>
+<div id="cell-61" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>Tool.get_instances()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'testtool': Tool(id=12, name='TestTool', description=None, organization_system=[&lt;OrganizationSystem.TAGS: 'tags'&gt;, &lt;OrganizationSystem.FOLDERS: 'folders'&gt;], phase_quality=PhaseQualityData(collect=&lt;PhaseQuality.GREAT: 'great'&gt;, retrieve=&lt;PhaseQuality.BAD: 'bad'&gt;, consume=&lt;PhaseQuality.OK: 'ok'&gt;, extract=&lt;PhaseQuality.NA: 'na'&gt;, refine=&lt;PhaseQuality.GREAT: 'great'&gt;), collect=None, retrieve=None, consume=None, extract=None, refine=None, slug='testtool')}</code></pre>
+</div>
+</div>
+<div id="cell-62" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>InformationItem.get_instances()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'test_article': InformationItem(id=16, name='Test Article', info_type=&lt;InformationType.WEB_ARTICLE: 'web_article'&gt;, method=PhaseMethodData(collect=&lt;Method.MANUAL: 'manual'&gt;, retrieve=None, consume=None, extract=None, refine=None), toolflow=PhaseToolflowData(collect=('reader', 'recall'), retrieve='recall', consume=None, extract=None, refine=None), slug='test_article')}</code></pre>
+</div>
+</div>
+<div id="cell-63" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>Improvement.get_instances()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'fix_search_again': Improvement(id=20, name='Fix Search again', what='Better search in Reader', why='Current search is bad', how='By thinking for yoursel', prio=1, tool='testtool', something='omnious', phase=&lt;Phase.RETRIEVE: 'retrieve'&gt;, slug='fix_search_again')}</code></pre>
+</div>
+</div>
+<p>Add a single instance to the SQLite table</p>
+<div id="cell-65" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>tst <span class="op">=</span> {<span class="st">'name'</span>: <span class="st">'NeoReader'</span>, <span class="st">'collect'</span>: <span class="va">None</span>, <span class="st">'retrieve'</span>: <span class="va">None</span>, <span class="st">'consume'</span>: <span class="va">None</span>, <span class="st">'extract'</span>: <span class="va">None</span>, <span class="st">'refine'</span>: <span class="va">None</span>, <span class="st">'slug'</span>: <span class="st">'neoreader'</span>, <span class="st">'organization_system'</span>: <span class="st">'["folders"]'</span>, <span class="st">'collect_quality'</span>: <span class="st">'ok'</span>, <span class="st">'retrieve_quality'</span>: <span class="st">'bad'</span>, <span class="st">'consume_quality'</span>: <span class="st">'great'</span>, <span class="st">'extract_quality'</span>: <span class="st">'na'</span>, <span class="st">'refine_quality'</span>: <span class="st">'na'</span>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-66" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>db.t.tools.insert(tst)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'id': 1,
+ 'name': 'NeoReader',
+ 'description': None,
+ 'collect': None,
+ 'retrieve': None,
+ 'consume': None,
+ 'extract': None,
+ 'refine': None,
+ 'slug': 'neoreader',
+ 'organization_system': '["folders"]',
+ 'collect_quality': 'ok',
+ 'retrieve_quality': 'bad',
+ 'consume_quality': 'great',
+ 'extract_quality': 'na',
+ 'refine_quality': 'na'}</code></pre>
+</div>
+</div>
+<div id="cell-67" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>tst2 <span class="op">=</span> {<span class="st">'id'</span>: <span class="dv">1</span>, <span class="st">'name'</span>: <span class="st">'NeoReader'</span>, <span class="st">'collect'</span>: <span class="st">"hiers staat nu wat"</span>, <span class="st">'retrieve'</span>: <span class="va">None</span>, <span class="st">'consume'</span>: <span class="va">None</span>, <span class="st">'extract'</span>: <span class="va">None</span>, <span class="st">'refine'</span>: <span class="va">None</span>, <span class="st">'slug'</span>: <span class="st">'neoreader'</span>, <span class="st">'organization_system'</span>: <span class="st">'["folders"]'</span>, <span class="st">'collect_quality'</span>: <span class="st">'ok'</span>, <span class="st">'retrieve_quality'</span>: <span class="st">'bad'</span>, <span class="st">'consume_quality'</span>: <span class="st">'great'</span>, <span class="st">'extract_quality'</span>: <span class="st">'na'</span>, <span class="st">'refine_quality'</span>: <span class="st">'na'</span>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-68" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>db.t.tools.update(tst2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'id': 1,
+ 'name': 'NeoReader',
+ 'description': None,
+ 'collect': 'hiers staat nu wat',
+ 'retrieve': None,
+ 'consume': None,
+ 'extract': None,
+ 'refine': None,
+ 'slug': 'neoreader',
+ 'organization_system': '["folders"]',
+ 'collect_quality': 'ok',
+ 'retrieve_quality': 'bad',
+ 'consume_quality': 'great',
+ 'extract_quality': 'na',
+ 'refine_quality': 'na'}</code></pre>
+</div>
+</div>
+<div id="cell-69" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>Improvement.get_instances()[<span class="st">'fix_search_again'</span>].flatten_for_db()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'id': 20,
+ 'name': 'Fix Search again',
+ 'what': 'Better search in Reader',
+ 'why': 'Current search is bad',
+ 'how': 'By thinking for yoursel',
+ 'prio': 1,
+ 'tool': 'testtool',
+ 'something': 'omnious',
+ 'phase': 'retrieve',
+ 'slug': 'fix_search_again'}</code></pre>
+</div>
+</div>
+<div id="cell-70" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>db.t.improvements.c</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>how, id, name, phase, prio, slug, something, tool, what, why</code></pre>
+</div>
+</div>
+<div id="cell-71" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>db.t.improvements.insert(Improvement.get_instances()[<span class="st">'fix_search_again'</span>].flatten_for_db())</span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>db.t.information_items.insert(InformationItem.get_instances()[<span class="st">'test_article'</span>].flatten_for_db())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'id': 16,
+ 'name': 'Test Article',
+ 'info_type': 'web_article',
+ 'slug': 'test_article',
+ 'collect_method': 'manual',
+ 'retrieve_method': None,
+ 'consume_method': None,
+ 'extract_method': None,
+ 'refine_method': None,
+ 'collect_toolflow': '["reader", "recall"]',
+ 'retrieve_toolflow': 'recall',
+ 'consume_toolflow': None,
+ 'extract_toolflow': None,
+ 'refine_toolflow': None}</code></pre>
+</div>
+</div>
+<div id="cell-72" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>[r <span class="cf">for</span> r <span class="kw">in</span> db.t.information_items.rows_where()]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'id': 16,
+  'name': 'Test Article',
+  'info_type': 'web_article',
+  'slug': 'test_article',
+  'collect_method': 'manual',
+  'retrieve_method': None,
+  'consume_method': None,
+  'extract_method': None,
+  'refine_method': None,
+  'collect_toolflow': '["reader", "recall"]',
+  'retrieve_toolflow': 'recall',
+  'consume_toolflow': None,
+  'extract_toolflow': None,
+  'refine_toolflow': None}]</code></pre>
+</div>
+</div>
+<p>Add multiple instances to the SQLite table</p>
+<div id="cell-74" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>db.t.tools.insert_all([t.flatten_for_db() <span class="cf">for</span> t <span class="kw">in</span> Tool.get_instances().values()])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>&lt;Table tools (id, name, description, collect, retrieve, consume, extract, refine, slug, organization_system, collect_quality, retrieve_quality, consume_quality, extract_quality, refine_quality)&gt;</code></pre>
+</div>
+</div>
+<div id="cell-75" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>[t.flatten_for_db() <span class="cf">for</span> t <span class="kw">in</span> Tool.get_instances().values()]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'id': 12,
+  'name': 'TestTool',
+  'description': None,
+  'collect': None,
+  'retrieve': None,
+  'consume': None,
+  'extract': None,
+  'refine': None,
+  'slug': 'testtool',
+  'organization_system': '["tags", "folders"]',
+  'collect_quality': 'great',
+  'retrieve_quality': 'bad',
+  'consume_quality': 'ok',
+  'extract_quality': 'na',
+  'refine_quality': 'great'}]</code></pre>
+</div>
+</div>
+<div id="cell-76" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>[r <span class="cf">for</span> r <span class="kw">in</span> db.t.tools.rows]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'id': 1,
+  'name': 'NeoReader',
+  'description': None,
+  'collect': 'hiers staat nu wat',
+  'retrieve': None,
+  'consume': None,
+  'extract': None,
+  'refine': None,
+  'slug': 'neoreader',
+  'organization_system': '["folders"]',
+  'collect_quality': 'ok',
+  'retrieve_quality': 'bad',
+  'consume_quality': 'great',
+  'extract_quality': 'na',
+  'refine_quality': 'na'},
+ {'id': 12,
+  'name': 'TestTool',
+  'description': None,
+  'collect': None,
+  'retrieve': None,
+  'consume': None,
+  'extract': None,
+  'refine': None,
+  'slug': 'testtool',
+  'organization_system': '["tags", "folders"]',
+  'collect_quality': 'great',
+  'retrieve_quality': 'bad',
+  'consume_quality': 'ok',
+  'extract_quality': 'na',
+  'refine_quality': 'great'}]</code></pre>
+</div>
+</div>
+</section>
+<section id="retrieve-data-from-the-database" class="level4">
+<h4 class="anchored" data-anchor-id="retrieve-data-from-the-database">Retrieve data from the database</h4>
+<p>Now retrieve the info from the database as intances from the Pydantic Dataclass using the <code>MiniDataAPI</code> from answer.ai.</p>
+<div id="cell-79" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="bu">type</span>(db.t.tools)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>apswutils.db.Table</code></pre>
+</div>
+</div>
+<div id="cell-80" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb89"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a>db.t.tools()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'id': 1,
+  'name': 'NeoReader',
+  'description': None,
+  'collect': 'hiers staat nu wat',
+  'retrieve': None,
+  'consume': None,
+  'extract': None,
+  'refine': None,
+  'slug': 'neoreader',
+  'organization_system': '["folders"]',
+  'collect_quality': 'ok',
+  'retrieve_quality': 'bad',
+  'consume_quality': 'great',
+  'extract_quality': 'na',
+  'refine_quality': 'na'},
+ {'id': 12,
+  'name': 'TestTool',
+  'description': None,
+  'collect': None,
+  'retrieve': None,
+  'consume': None,
+  'extract': None,
+  'refine': None,
+  'slug': 'testtool',
+  'organization_system': '["tags", "folders"]',
+  'collect_quality': 'great',
+  'retrieve_quality': 'bad',
+  'consume_quality': 'ok',
+  'extract_quality': 'na',
+  'refine_quality': 'great'}]</code></pre>
+</div>
+</div>
+<div id="cell-81" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb91"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a>tool <span class="op">=</span> Tool.from_db(db.t.tools()[<span class="dv">0</span>])</span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>tool</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>Tool(id=1, name='NeoReader', description=None, organization_system=[&lt;OrganizationSystem.FOLDERS: 'folders'&gt;], phase_quality=PhaseQualityData(collect=&lt;PhaseQuality.OK: 'ok'&gt;, retrieve=&lt;PhaseQuality.BAD: 'bad'&gt;, consume=&lt;PhaseQuality.GREAT: 'great'&gt;, extract=&lt;PhaseQuality.NA: 'na'&gt;, refine=&lt;PhaseQuality.NA: 'na'&gt;), collect='hiers staat nu wat', retrieve=None, consume=None, extract=None, refine=None, slug='neoreader')</code></pre>
+</div>
+</div>
+<div id="cell-82" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a>db.t.tools()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'id': 1,
+  'name': 'NeoReader',
+  'description': None,
+  'collect': 'hiers staat nu wat',
+  'retrieve': None,
+  'consume': None,
+  'extract': None,
+  'refine': None,
+  'slug': 'neoreader',
+  'organization_system': '["folders"]',
+  'collect_quality': 'ok',
+  'retrieve_quality': 'bad',
+  'consume_quality': 'great',
+  'extract_quality': 'na',
+  'refine_quality': 'na'},
+ {'id': 12,
+  'name': 'TestTool',
+  'description': None,
+  'collect': None,
+  'retrieve': None,
+  'consume': None,
+  'extract': None,
+  'refine': None,
+  'slug': 'testtool',
+  'organization_system': '["tags", "folders"]',
+  'collect_quality': 'great',
+  'retrieve_quality': 'bad',
+  'consume_quality': 'ok',
+  'extract_quality': 'na',
+  'refine_quality': 'great'}]</code></pre>
+</div>
+</div>
+<hr>
+<p><a href="https://github.com/Hopsakee/infoflow/blob/main/infoflow/classdb.py#L353" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+</section>
+<section id="dict_from_db" class="level3">
+<h3 class="anchored" data-anchor-id="dict_from_db">dict_from_db</h3>
+<blockquote class="blockquote">
+<pre><code> dict_from_db (db_table:apswutils.db.Table,
+               class_table:pydantic.main.BaseModel)</code></pre>
+</blockquote>
+<p><em>Converts a database table to a dictionary of pydantic models.</em></p>
+<div id="cell-84" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb96"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a>tools_dict <span class="op">=</span> dict_from_db(db.t.tools, Tool)</span>
+<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>item_dict <span class="op">=</span> dict_from_db(db.t.information_items, InformationItem)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="cell-85" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb97"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="bu">getattr</span>(db.t.improvements()[<span class="dv">0</span>], <span class="st">'tool'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'testtool'</code></pre>
+</div>
+</div>
+<div id="cell-86" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb99"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a>tools_dict</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>{'neoreader': Tool(id=1, name='NeoReader', description=None, organization_system=[&lt;OrganizationSystem.FOLDERS: 'folders'&gt;], phase_quality=PhaseQualityData(collect=&lt;PhaseQuality.OK: 'ok'&gt;, retrieve=&lt;PhaseQuality.BAD: 'bad'&gt;, consume=&lt;PhaseQuality.GREAT: 'great'&gt;, extract=&lt;PhaseQuality.NA: 'na'&gt;, refine=&lt;PhaseQuality.NA: 'na'&gt;), collect='hiers staat nu wat', retrieve=None, consume=None, extract=None, refine=None, slug='neoreader'),
+ 'testtool': Tool(id=12, name='TestTool', description=None, organization_system=[&lt;OrganizationSystem.TAGS: 'tags'&gt;, &lt;OrganizationSystem.FOLDERS: 'folders'&gt;], phase_quality=PhaseQualityData(collect=&lt;PhaseQuality.GREAT: 'great'&gt;, retrieve=&lt;PhaseQuality.BAD: 'bad'&gt;, consume=&lt;PhaseQuality.OK: 'ok'&gt;, extract=&lt;PhaseQuality.NA: 'na'&gt;, refine=&lt;PhaseQuality.GREAT: 'great'&gt;), collect=None, retrieve=None, consume=None, extract=None, refine=None, slug='testtool')}</code></pre>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/Hopsakee\.github\.io\/infoflow");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/Hopsakee/infoflow/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
