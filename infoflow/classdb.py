@@ -321,9 +321,17 @@ class Improvement(SluggedModel):
     
     @classmethod
     def from_db(cls, db_record):
-        phase = Phase(db_record['phase'])
-        return cls(id=db_record['id'], name=db_record['name'], what=db_record['what'], why=db_record['why'], prio=db_record['prio'], tool=db_record['tool'], phase=phase)
-
+        phase = Phase(cls._fld(db_record, 'phase'))
+        return cls(
+            id=cls._fld(db_record, 'id'),
+            name=cls._fld(db_record, 'name'),
+            what=cls._fld(db_record, 'what'),
+            why=cls._fld(db_record, 'why'),
+            how=cls._fld(db_record, 'how'),
+            prio=cls._fld(db_record, 'prio'),
+            tool=cls._fld(db_record, 'tool'),
+            phase=phase,
+        )
 
 # %% ../nbs/00_classes_db.ipynb 35
 def create_db(

@@ -31,6 +31,7 @@ app, rt = fast_app(
     ],
 )
 
+def H2_cp(*c, **kwargs): return H2(*c, **kwargs, cls="text-primary")
 def H4_cp(*c, **kwargs): return H4(*c, **kwargs, cls="text-primary")
 
 def WorkflowViz(
@@ -50,13 +51,16 @@ def format_toolflow(toolflow_val):
     if isinstance(toolflow_val, (list, tuple)): return ", ".join(toolflow_val)
     return toolflow_val
 
+def _row_id(row): return getattr(row, "id") if hasattr(row, "id") else row("id")
+
 def ensure_unique_slug(table, slug, current_id=None):
     matches = table("slug=?", (slug,))
     if not matches: return
     # Check if the we are updating an existing item, else raise a ValueError
     cid = int(current_id) if current_id is not None else None
     for row in matches:
-        if cid is None or int(row["id"]) != cid:
+        rid = int(_row_id(row))
+        if cid is None or rid != cid:
             raise ValueError("An item with this name already exists. Please choose a different name.")
 
 def _improvement_form_fields(imp=None, tool=None):
@@ -64,11 +68,11 @@ def _improvement_form_fields(imp=None, tool=None):
     all_tools = db.t.tools()
     tool_slug = imp.tool if imp else tool
     
-    tool_options = [Option(t['name'], value=t['slug'], selected=t['slug']==tool_slug) for t in all_tools]
+    tool_options = [Option(t.name, value=t.slug, selected=t.slug==tool_slug) for t in all_tools]
     phase_options = [Option(p.value.title(), value=p.value, selected=(imp and p.value==imp.phase.value)) for p in Phase]
     
     return (
-        LabelInput("Title", name="title", value=imp.title if imp else "", required=True),
+        LabelInput("Title", name="name", value=imp.name if imp else "", required=True),
         LabelTextArea("What needs to be improved", name="what", value=imp.what if imp else "", required=True),
         LabelTextArea("Why is this improvement needed", name="why", value=imp.why if imp else "", required=True),
         LabelTextArea("How to build this improvement", name="how", value=imp.how if imp else "", required=True),
@@ -80,6 +84,7 @@ def _improvement_form_fields(imp=None, tool=None):
 
 
 def _resource_form_fields(item: InformationItem | None = None):
+    """Build form fields for information item type, phase methods, and phase toolflow. Used for both creating and editing information items."""
     info_type_options = []
     info_type_val = item.info_type.value if item else None
     if item is None: info_type_options.append(Option("Select type", value="", selected=True))
@@ -88,8 +93,7 @@ def _resource_form_fields(item: InformationItem | None = None):
     phases = ["collect", "retrieve", "consume", "extract", "refine"]
     for phase in phases:
         method_val = getattr(item.method, phase) if item else None
-        options = [Option("Not specified", value="", selected=method_val is None)]
-        options += [Option(m.value.title(), value=m.value, selected=(method_val and m.value==method_val.value)) for m in Method]
+        options = [Option(m.value.title(), value=m.value, selected=(method_val and m.value==method_val.value)) for m in Method]
         phase_method_selects.append(LabelSelect(*options, label=f"{phase.title()}", name=f"{phase}_method", cls="min-w-40"))
     def toolflow_value(phase):
         if not item: return ""
@@ -106,7 +110,7 @@ async def _improvement_save(form_data, slug=None):
     imp_id = form_data.get("id")
     new_imp = Improvement(
         id=int(imp_id) if imp_id else None,
-        title=form_data.get("title"),
+        name=form_data.get("name"),
         what=form_data.get("what"),
         why=form_data.get("why"),
         how=form_data.get("how"),
@@ -481,7 +485,6 @@ def all_tools_improvements():
 
     # item_row = db.t.information_items("slug=?", (slug,))[0]
         tool_slug = imp.tool
-        print(tool_slug)
         if tool_slug not in imp_by_tool: imp_by_tool[tool_slug] = []
         imp_by_tool[tool_slug].append(imp)
     
@@ -528,14 +531,20 @@ def all_tools_improvements():
     )
 
 @rt
-def improvement(id: int=None):
-    imp_row = db.t.improvements("id=?", (id,))[0]
-    imp = Improvement(**imp_row)
+def improvement(id: int=None, slug: str=None):
+    if id:
+        imp_row = db.t.improvements("id=?", (id,))[0]
+    elif slug:
+        imp_row = db.t.improvements("slug=?", (slug,))[0]
+    else:
+        raise ValueError("No id or slug provided")
+    imp = Improvement.from_db(imp_row)
     slug = imp.slug
+    id = imp.id
     
     prio_color = "#0066cc" if imp.prio == 1 else "#666666"
     
-    return Titled(f"Improvement: {imp.title}",
+    return Titled(f"Improvement: {imp.name}",
         DivFullySpaced(
             Button("← Back to Tools List", hx_get="/all_tools_improvements", hx_target="#main-content", hx_swap="innerHTML"),
             Button("Edit", hx_get=f"/improvement_edit?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
@@ -543,7 +552,7 @@ def improvement(id: int=None):
         ),
         Card(
             DivVStacked(
-                H2(imp.title, style="color:#0066cc;"),
+                H2_cp(imp.name),
                 H4(f"Tool: {imp.tool.title()}", style="text-align:center; cursor:pointer;", hx_get=f"/tool?slug={imp.tool}", hx_target="#main-content", hx_swap="innerHTML"),
                 Hr(),
                 DivVStacked(
@@ -592,9 +601,9 @@ def improvement_add(tool: str):
 @rt
 def improvement_edit(slug: str):
     imp_row = db.t.improvements("slug=?", (slug,))[0]
-    imp = Improvement(**imp_row)
+    imp = Improvement.from_db(imp_row)
     
-    return Titled(f"Edit Improvement: {imp.title}",
+    return Titled(f"Edit Improvement: {imp.name}",
         DivFullySpaced(
             Button("← Back to Improvement", hx_get=f"/improvement?slug={slug}", hx_target="#main-content", hx_swap="innerHTML"),
             cls="uk-margin-bottom"
@@ -618,7 +627,6 @@ def improvement_edit(slug: str):
 @rt
 async def improvement_create(req):
     form_data = await req.form()
-    print(form_data)
     try:
         new_imp = await _improvement_save(form_data)
         return RedirectResponse(url=f"/improvement?slug={new_imp.slug}", status_code=303)
@@ -633,7 +641,6 @@ async def improvement_create(req):
 @rt("/improvement_save")
 async def improvement_save(slug: str, req):
     form_data = await req.form()
-    print(form_data)
     try:
         updated_imp = await _improvement_save(form_data, slug=slug)
         return RedirectResponse(url=f"/improvement?slug={updated_imp.slug}", status_code=303)
