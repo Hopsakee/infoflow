@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python:3.12-trixie-slim
+FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim
 WORKDIR /app
 COPY pyproject.toml uv.lock .
 RUN --mount=type=cache,target=/root/.cache uv sync
