@@ -12,7 +12,12 @@ license = {text = "Apache-2.0"}
 authors = [{name = "Hopsakee", email = "jdejong@posteo.nl"}]
 keywords = ['nbdev', 'jupyter', 'notebook', 'python']
 classifiers = ["Natural Language :: English", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
-dependencies = []
+dependencies = [
+    "graphviz>=0.21",
+    "monsterui>=1.0.44",
+    "pydantic>=2.12.5",
+    "python-fasthtml>=0.12.47",
+]
 
 [project.urls]
 Repository = "https://github.com/Hopsakee/infoflow"
