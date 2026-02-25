@@ -8,6 +8,6 @@ jobs:
       - name: Install Graphviz
         run: sudo apt-get update && sudo apt-get install -y graphviz
 
-      - uses: fastai/workflows/nbdev-ci@master
+      - uses: fastai/workflows/nbdev3-ci@master
         with:
           version: "3.11"

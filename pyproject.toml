@@ -1,26 +1,30 @@
-[project]
-name="infoflow"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python=">=3.11"
-dependencies = [
-    "fh-pydantic-form>=0.3.7",
-    "graphix>=0.3.2",
-    "graphviz>=0.21",
-    "hopsa>=0.3.0",
-    "monsterui>=1.0.26",
-    "pre-commit>=4.3.0",
-    "pydantic>=2.11.7",
-    "python-fasthtml>=0.12.25",
-]
-
 [build-system]
-requires = ["setuptools>=64.0"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
-[dependency-groups]
-dev = [
-    "ipykernel>=6.30.1",
-    "nbdev>=2.4.5",
-]
+[project]
+name="infoflow"
+dynamic = ["version"]
+description = "Visualisation and description of Jelle's information process workflow"
+readme = "README.md"
+requires-python=">=3.11"
+license = {text = "Apache-2.0"}
+authors = [{name = "Hopsakee", email = "jdejong@posteo.nl"}]
+keywords = ['nbdev', 'jupyter', 'notebook', 'python']
+classifiers = ["Natural Language :: English", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/Hopsakee/infoflow"
+Documentation = "https://Hopsakee.github.io/infoflow"
+
+[project.entry-points.nbdev]
+infoflow = "infoflow._modidx:d"
+
+[tool.setuptools.dynamic]
+version = {attr = "infoflow.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["infoflow"]
+
+[tool.nbdev]

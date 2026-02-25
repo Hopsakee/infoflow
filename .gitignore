@@ -1,3 +1,7 @@
+# Windsurf artefacts (probably)
+.sesskey
+
+
 data/
 *.db*
 
