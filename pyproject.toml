@@ -34,3 +34,8 @@ version = {attr = "infoflow.__version__"}
 include = ["infoflow"]
 
 [tool.nbdev]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+]
