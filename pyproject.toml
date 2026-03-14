@@ -3,11 +3,11 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="infoflow"
+name = "infoflow"
 dynamic = ["version"]
 description = "Visualisation and description of Jelle's information process workflow"
 readme = "README.md"
-requires-python=">=3.11"
+requires-python = ">=3.11"
 license = {text = "Apache-2.0"}
 authors = [{name = "Hopsakee", email = "jdejong@posteo.nl"}]
 keywords = ['nbdev', 'jupyter', 'notebook', 'python']
