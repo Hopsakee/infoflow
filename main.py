@@ -1,13 +1,5 @@
 from __future__ import annotations
-import re
-import json
-import graphviz
-import xml.etree.ElementTree as ET
 
-from enum import Enum
-from typing import Union, ClassVar
-
-from pydantic import BaseModel, field_serializer, field_validator, Field, computed_field
 from fastlite import *
 from fastcore.test import *
 from hopsa import ossys
@@ -18,7 +10,8 @@ from infoflow.classdb import *
 from infoflow.viz import *
 from infoflow.webapp import *
 
-db = create_db("./data/infoflow.db")
+rt = ossys.get_project_root()
+db = create_db(rt / "data/infoflow.db")
 [Tool.from_db(t) for t in db.t.tools()]
 
 create_tables_from_pydantic(db, [InformationItem, Tool, Improvement])

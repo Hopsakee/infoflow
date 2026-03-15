@@ -37,5 +37,6 @@ include = ["infoflow"]
 
 [dependency-groups]
 dev = [
+    "ipykernel>=7.2.0",
     "pre-commit>=4.5.1",
 ]
