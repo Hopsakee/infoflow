@@ -1,6 +1,9 @@
 # Windsurf artefacts (probably)
 .sesskey
 
+# Session keys and other local secrets, never commit these
+secrets/
+
 
 data/
 *.db*

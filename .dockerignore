@@ -5,3 +5,11 @@
 **/__pycache__
 **/.aichats
 **/.windsurf
+**/.venv
+.sesskey
+**/.sesskey
+secrets/
+data/
+*.db
+*.db-wal
+*.db-shm
