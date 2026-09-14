@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pydantic import BaseModel, field_serializer, field_validator, Field, computed_field
 from fastlite import *
 from fastcore.test import *
+from fastcore.foundation import L
 from hopsa import ossys
 
 # %% auto #0

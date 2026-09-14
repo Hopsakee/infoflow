@@ -9,6 +9,7 @@ __all__ = ['tools_from_code', 'informationitems_from_code', 'db_from_instances']
 
 # %% ../nbs/01_create_instances.ipynb #19efa09a
 from fasthtml.common import *
+from fastlite import Database
 from .classdb import *
 
 # %% ../nbs/01_create_instances.ipynb #a63f1d61

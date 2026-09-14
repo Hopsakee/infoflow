@@ -480,6 +480,7 @@ wheels = [
 name = "infoflow"
 source = { editable = "." }
 dependencies = [
+    { name = "fastlite" },
     { name = "graphviz" },
     { name = "hopsa" },
     { name = "monsterui" },
@@ -495,6 +496,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "fastlite", specifier = ">=0.2.4" },
     { name = "graphviz", specifier = ">=0.21" },
     { name = "hopsa", specifier = ">=0.3.0" },
     { name = "monsterui", specifier = ">=1.0.44" },
