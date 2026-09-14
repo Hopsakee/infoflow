@@ -13,6 +13,7 @@ authors = [{name = "Hopsakee", email = "jdejong@posteo.nl"}]
 keywords = ['nbdev', 'jupyter', 'notebook', 'python']
 classifiers = ["Natural Language :: English", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
 dependencies = [
+    "fastlite>=0.2.4",
     "graphviz>=0.21",
     "hopsa>=0.3.0",
     "monsterui>=1.0.44",
