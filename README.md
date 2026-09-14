@@ -32,7 +32,9 @@ uv sync
 uv run main.py
 ```
 
-This starts a local server where the application will be run.
+This starts a local server where the application will be run. To run it as
+a container, see
+[DEPLOYMENT.md](https://github.com/Hopsakee/infoflow/blob/main/DEPLOYMENT.md).
 
 ## Developer Guide
 

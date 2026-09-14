@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import os
+import secrets
+import warnings
+from pathlib import Path
+
 from fastlite import *
 from fastcore.test import *
 from hopsa import ossys
@@ -10,14 +15,48 @@ from infoflow.classdb import *
 from infoflow.viz import *
 from infoflow.webapp import *
 
-rt = ossys.get_project_root()
-db = create_db(rt / "data/infoflow.db")
+def env_flag(name, default=False):
+    "Read `name` from the environment as a boolean."
+    val = os.environ.get(name)
+    if val is None: return default
+    return val.strip().lower() in ("1", "true", "yes", "on")
+
+def db_path():
+    "SQLite file to use: `INFOFLOW_DB_PATH`, else `data/infoflow.db` in the project root."
+    loc = os.environ.get("INFOFLOW_DB_PATH")
+    loc = Path(loc) if loc else ossys.get_project_root() / "data/infoflow.db"
+    loc.parent.mkdir(parents=True, exist_ok=True)
+    return loc
+
+def session_key():
+    """Key used to sign session cookies.
+
+    Taken from `INFOFLOW_SESSION_KEY`, or from the file named by
+    `INFOFLOW_SESSION_KEY_FILE` (mount a single secret read-only there). We never
+    fall back to a key stored in the repo; without one configured a random key is
+    generated per process, so sessions simply don't survive a restart.
+    """
+    key = os.environ.get("INFOFLOW_SESSION_KEY")
+    if key and key.strip(): return key.strip()
+    fname = os.environ.get("INFOFLOW_SESSION_KEY_FILE")
+    if fname:
+        key = Path(fname).read_text().strip()
+        if not key: raise ValueError(f"Session key file {fname} is empty")
+        return key
+    warnings.warn("No INFOFLOW_SESSION_KEY(_FILE) set; using a random key, so sessions end on restart.")
+    return secrets.token_hex(32)
+
+DEV = env_flag("INFOFLOW_DEV")
+
+db = create_db(db_path())
 [Tool.from_db(t) for t in db.t.tools()]
 
 create_tables_from_pydantic(db, [InformationItem, Tool, Improvement])
 
 
 app, rt = fast_app(
+    secret_key=session_key(),
+    sess_https_only=env_flag("INFOFLOW_HTTPS_ONLY", False),
     hdrs=[
         Style(".node { cursor: pointer; }"),
         Theme.blue.headers(),
@@ -645,4 +684,4 @@ async def improvement_save(slug: str, req):
             )
         )
 
-serve()
+serve(reload=DEV)
