@@ -28,25 +28,34 @@ def db_path():
     loc.parent.mkdir(parents=True, exist_ok=True)
     return loc
 
+DEV = env_flag("INFOFLOW_DEV")
+
 def session_key():
     """Key used to sign session cookies.
 
-    Taken from `INFOFLOW_SESSION_KEY`, or from the file named by
-    `INFOFLOW_SESSION_KEY_FILE` (mount a single secret read-only there). We never
-    fall back to a key stored in the repo; without one configured a random key is
-    generated per process, so sessions simply don't survive a restart.
+    Taken from `SESSION_SECRET`, or from the file named by `SESSION_SECRET_FILE`.
+    Passing it here means FastHTML never calls `get_key()`, so it never writes a
+    `.sesskey` into the working directory - which it cannot do anyway as the
+    unprivileged user the container runs as.
+
+    Refuses to start without one, rather than coming up with a key nobody knows.
+    `INFOFLOW_DEV=1` generates a random key instead, for running locally; sessions
+    then end when the process does.
     """
-    key = os.environ.get("INFOFLOW_SESSION_KEY")
+    key = os.environ.get("SESSION_SECRET")
     if key and key.strip(): return key.strip()
-    fname = os.environ.get("INFOFLOW_SESSION_KEY_FILE")
+    fname = os.environ.get("SESSION_SECRET_FILE")
     if fname:
         key = Path(fname).read_text().strip()
-        if not key: raise ValueError(f"Session key file {fname} is empty")
-        return key
-    warnings.warn("No INFOFLOW_SESSION_KEY(_FILE) set; using a random key, so sessions end on restart.")
-    return secrets.token_hex(32)
-
-DEV = env_flag("INFOFLOW_DEV")
+        if key: return key
+        raise RuntimeError(f"SESSION_SECRET_FILE {fname} is empty")
+    if DEV:
+        warnings.warn("INFOFLOW_DEV: using a random session key, so sessions end on restart.")
+        return secrets.token_hex(32)
+    raise RuntimeError(
+        "SESSION_SECRET is not set. Refusing to start without a session key. "
+        "Set SESSION_SECRET or SESSION_SECRET_FILE, or INFOFLOW_DEV=1 to run locally."
+    )
 
 db = create_db(db_path())
 [Tool.from_db(t) for t in db.t.tools()]

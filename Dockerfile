@@ -11,16 +11,15 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends graphviz \
     && rm -rf /var/lib/apt/lists/*
 
-# Unprivileged account to run as. /data is the only path the app needs to write:
-# mount its own SQLite file there, nothing else.
+# Unprivileged account to run as. /app stays root-owned so the runtime user cannot
+# rewrite its own code or virtualenv; /data is the only path it needs to write.
 RUN useradd --system --uid 10001 --user-group --no-create-home infoflow \
     && install -d -o infoflow -g infoflow /data
 
 COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache uv sync --frozen --no-dev --no-install-project
 COPY . .
-RUN --mount=type=cache,target=/root/.cache uv sync --frozen --no-dev \
-    && chown -R infoflow:infoflow /app
+RUN --mount=type=cache,target=/root/.cache uv sync --frozen --no-dev
 
 USER infoflow
 EXPOSE 5001

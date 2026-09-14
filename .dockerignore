@@ -8,7 +8,6 @@
 **/.venv
 .sesskey
 **/.sesskey
-secrets/
 data/
 *.db
 *.db-wal
